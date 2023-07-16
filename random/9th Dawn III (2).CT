@@ -1,0 +1,3468 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="31">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>10</ID>
+      <Description>"Enable"</Description>
+      <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+      <LastState/>
+      <Color>0000FF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : 9th Dawn III.exe
+  Version: 
+  Date   : 2020-10-17
+  Author : cfe
+
+  This script does blah blah blah
+}
+{$lua}
+if syntaxcheck then return end
+
+--------------------------------
+
+function tohex(n)return string.format('%X',n or 0)end
+
+--------------------------------
+
+function reEscape(s)
+  local escPatChars = [[().%+-*?[^]]
+  s = s:gsub('.',function(c) if escPatChars:find(c,1,true) then return '%'..c end end)
+  return s
+end
+
+--------------------------------
+
+function findMethodBySignature(namespace,classname,methodname,signature,check)
+  assert(type(signature)=='string',"invalid signature")
+  signature="^"..reEscape(signature:gsub(";",","))
+  local class = mono_findClass(namespace,classname)
+  if type(class)~='number' or class==0 then return nil end
+  local methods=mono_class_enumMethods(class)
+  if type(methods)~='table' or #methods&lt;1 then return nil end
+  for i=1,#methods do
+	if methodname == methods[i].name then
+	  local sign = mono_method_getSignature(methods[i].method)
+	  if sign:match(signature) then
+	    return methods[i].method
+	  end
+	end
+  end
+end
+
+--------------------------------
+
+function findMethodAddrBySignature(namespace,classname,methodname,signature,check)
+  local meth = findMethodBySignature(namespace,classname,methodname,signature,check)
+  if meth~=nil and meth&gt;0 then
+    return mono_compile_method(meth)
+  end
+end
+--------------------------------
+
+function aobScanEx( aob )
+--https://forum.cheatengine.org/viewtopic.php?t=577536  - thanks panraven!
+  local p, a, n, s, e = nil or '*X*W', nil or fsmNotAligned, nil or '0', getAddress( process ) or 0x0, ( getAddress( process ) + getModuleSize( process ) ) or 0xffffffffffffffff
+  local ms = pb and createMemScan( pb ) or createMemScan()
+  local fl = createFoundList( ms )
+  ms.firstScan( soExactValue, vtByteArray, nil, aob, nil, s, e, p, a, n, true, false, false, false )
+  ms.waitTillDone()
+  fl.initialize()
+  local result = nil
+  if fl ~= nil and fl.getCount() &gt; 0 then
+    result = createStringlist()
+    for i = 1, fl.getCount() do result.add( fl.getAddress( i - 1 ) ) end
+  end
+  fl.destroy()
+  ms.destroy()
+  return result
+end
+
+function string.fromhex( s )
+    return ( s:gsub( '..', function ( cc )
+        return string.char( tonumber( cc, 16 ) )
+    end ) )
+end
+
+function aobScanSmall( aob, s, e )
+  local i = byteTableToString( readBytes( s, e, true ) ):find( string.fromhex( aob ), 1, true )
+  if i == nil then i = 1 end
+  return ( s + i - 1 )
+end
+
+{$asm}
+
+define(address,cPlayerData:update_Fixed)
+define(bytes,55 48 8B EC 48 83 EC **)
+
+define(address5,cInventory:forceCountCurrency)
+define(bytes5,55 48 8B EC 48 83 EC 30)
+
+[ENABLE]
+{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+
+local pCompareCards = getAddressSafe("cCardGameManager:game_CompareCards_Final_AndGetWinner")
+local pGetFlag = aobScanSmall( '48B8', pCompareCards,0x100)
+--print(string.format("%X",pGetFlag))
+
+local pMem = allocateMemory( 64 )
+unregisterSymbol( "bImmortal" )
+registerSymbol( "bImmortal", pMem, true )
+
+local pAddress =  readQword( pGetFlag + 0x02)
+writeQword(pMem + 0x00, pAddress)
+
+--iladdress = findMethodAddrBySignature('','cInventory','addItem','cItem','bool','bool',true)
+iladdress = findMethodAddrBySignature('','cInventory','addItem','cItemData','long','bool','bool',true)
+
+writeQword( pMem + 0x10, iladdress )
+unregisterSymbol( "pAddItem" )
+registerSymbol( "pAddItem", pMem + 0x10, true )
+
+{$asm}
+
+assert(address,bytes)
+alloc(newmem,$1000,cGameChanger:regen_Process_Player_HP)
+
+label(code)
+label(return)
+label(cPlayerData)
+label(pInventory)
+label(iCardID)
+label(bAddCard)
+label(pCard)
+label(bAddCoin)
+label(bAddItem)
+label(iItemID)
+label(pItem)
+label(pCInventory)
+registersymbol(pCInventory)
+registersymbol(pItem)
+registersymbol(iItemID)
+registersymbol(bAddCoin)
+registersymbol(bAddItem)
+registersymbol(cPlayerData)
+registersymbol(pCard)
+registersymbol(iCardID)
+registersymbol(bAddCard)
+
+label(CheckNext)
+label(CheckAddItem)
+label(RestoreAndJumpBack)
+
+alloc(origAddress,8)
+registersymbol(origAddress)
+
+origAddress:
+readmem(address,8)
+
+newmem:
+
+code:
+  readmem(address,8)
+  mov [cPlayerData],rcx
+  push rcx
+  mov rcx,[rcx+130]
+  mov [pInventory],rcx
+  pop rcx
+  cmp byte ptr[bAddCard],1
+  jne short CheckNext
+    sub rsp,28
+    mov rcx,[iCardID]
+    mov r11,"DBCard:getSafe"
+    call r11
+    mov [pCard],rax
+    mov rdx,rax
+    mov rcx,[pInventory]
+    mov r11,"cCardInventory_Player:modify_AddCard"
+    call r11
+    mov rcx,[cPlayerData]
+    mov byte ptr[bAddCard],0
+    add rsp,28
+  CheckNext:
+  cmp byte ptr[bAddCoin],1
+  jne CheckAddItem
+   mov rcx,1
+   mov rdx,1
+   mov r11,"cGameChanger:ability_GiveCoin_AllPlayers"
+   call r11
+   mov rcx,[cPlayerData]
+   mov byte ptr[bAddCoin],0
+  CheckAddItem:
+  cmp byte ptr[bAddItem],1
+  jne return
+   mov byte ptr[bAddItem],0
+   mov rcx,[iItemID]
+   mov r11,"DBItem:getSafe"
+   call r11
+   mov rdx,rax
+   mov rcx,[pCInventory]
+   test rcx,rcx
+   je RestoreAndJumpBack
+   mov r8,1
+   xor r9,r9
+   mov r11,pAddItem
+   mov r11,[r11]
+   call r11
+   mov [pItem],rax
+  RestoreAndJumpBack:
+  mov rcx,[cPlayerData]
+  jmp return
+pCard:
+dq 0
+cPlayerData:
+dq 0
+pInventory:
+dq 0
+iCardID:
+dd 0
+bAddCard:
+db 0
+bAddCoin:
+db 0
+bAddItem:
+db 0
+iItemID:
+dd 0
+pItem:
+dq 0
+pCInventory:
+dq 0
+
+address:
+  jmp newmem
+  nop 3
+return:
+
+//
+
+assert(address5,bytes5)
+alloc(newmem5,$1000,cInventory:forceCountCurrency)
+
+label(code5)
+label(return5)
+
+newmem5:
+
+code5:
+  push rbp
+  mov rbp,rsp
+  sub rsp,30
+  mov [pCInventory],rcx
+  jmp return5
+
+address5:
+  jmp newmem5
+  nop 3
+return5:
+
+[DISABLE]
+address:
+  readmem(origAddress,8)
+
+dealloc(newmem)
+
+address5:
+  db bytes5
+
+dealloc(newmem5)
+
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>19</ID>
+          <Description>"Unlock All Recipes"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+cRecipeData:isLocked:
+db 31 C0 C3
+
+[DISABLE]
+cRecipeData:isLocked:
+db 48 83 EC
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>24</ID>
+          <Description>"Ignore Attribute Points"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : 9th Dawn III.exe
+  Version: 
+  Date   : 2020-10-17
+  Author : cfe
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+
+cPlayerData:attribute_RecalcPointsLeft:
+db C3
+
+//
+
+aobscanregion(aobCheckAttributes,cWindow_Attributes:syncToPlayer,cWindow_Attributes:syncToPlayer+500,48 63 87 80 00 00 00) // should be unique
+alloc(newmem,$1000,aobCheckAttributes)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  movsxd  rax,dword ptr [rdi+00000080]
+  cmp rax,1
+  jge return
+  mov eax,1
+  mov [rdi+80],eax
+  jmp return
+
+aobCheckAttributes:
+  jmp newmem
+  nop 2
+return:
+registersymbol(aobCheckAttributes)
+
+[DISABLE]
+cPlayerData:attribute_RecalcPointsLeft:
+db 48
+
+aobCheckAttributes:
+  db 48 63 87 80 00 00 00
+
+unregistersymbol(aobCheckAttributes)
+dealloc(newmem)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26788</ID>
+          <Description>"Add Ability Coin"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+
+[ENABLE]
+
+CardFlag = getAddressSafe( "bAddCoin" )
+writeBytes( CardFlag, 0x01)
+
+print("Coin Added")
+return "assert(true)"
+
+[DISABLE]
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>20</ID>
+          <Description>"God"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+[bImmortal]:
+db 01
+
+ 
+ 
+[DISABLE]
+[bImmortal]:
+db 00
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26784</ID>
+          <Description>"Freeze SP"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+cGameChanger:modifySP:
+db C3
+
+ 
+[DISABLE]
+cGameChanger:modifySP:
+db 55
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26785</ID>
+          <Description>"Freeze MP"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+cGameChanger:modifyMP:
+db C3
+
+ 
+[DISABLE]
+cGameChanger:modifyMP:
+db 55
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>90082</ID>
+          <Description>"Easy Fishing"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : 9th Dawn III.exe
+  Version: 
+  Date   : 2020-10-21
+  Author : cfe
+
+  This script does blah blah blah
+}
+
+define(address,cFishingGameManager:modStamina)
+define(bytes,55 48 8B EC 48 83 EC 40)
+
+[ENABLE]
+cFishingGameManager:modLineStrength:
+db C3
+
+ 
+assert(address,bytes)
+alloc(newmem,$1000,cFishingGameManager:modStamina)
+
+label(code)
+label(return)
+label(fSubVal)
+newmem:
+
+code:
+  push rbp
+  mov rbp,rsp
+  sub rsp,40
+  //
+  sub rsp,10
+  movdqu [rsp],xmm0
+  movss xmm0,[rcx+9C]
+  subss xmm0,[fSubVal]
+  movss [rcx+9C],xmm0
+  movdqu xmm0,[rsp]
+  add rsp,10
+  jmp return
+fSubVal:
+dd (float)0.1
+address:
+  jmp newmem
+  nop 3
+return:
+
+[DISABLE]
+cFishingGameManager:modLineStrength:
+db 55
+
+address:
+  db bytes
+  // push rbp
+  // mov rbp,rsp
+  // sub rsp,40
+
+dealloc(newmem)
+
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>31</ID>
+          <Description>"Inventory Editor"</Description>
+          <LastState/>
+          <Color>808000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+LaunchMonoDataCollector()
+if syntaxcheck then return end
+
+[ENABLE]
+local addressList = getAddressList()
+------------------------------------
+------------------------------------
+------------------------------------
+local addressListObjects = {}
+for i,v in ipairs(addressList) do
+ if (string.find(v.Description, "-Item-")) then
+    table.insert(addressListObjects,v)
+ end
+end
+for i,v in ipairs(addressListObjects) do
+   memoryrecord_delete(v)
+end
+
+------------------------------------
+------------------------------------
+------------------------------------
+
+local pInv = getAddressSafe( "[pCInventory]")
+
+if pInv == 0 then showMessage("Open Inventory First") error("") return end
+
+
+local mItem = readPointer( pInv + 0x10 )
+local c = readInteger( mItem + 0x18 )
+c=c*8
+
+local Item = mItem+0x20
+
+for i=0,c,8 do
+  tempItem = readPointer(Item)
+  pItem = readPointer(Item)
+  tempItem = readPointer(tempItem+0x10)
+  tempItem = readPointer(tempItem+0x18)
+  Name = readString(tempItem+0x14, 99, true)
+
+  NewEntry = addressList.createMemoryRecord()
+  local EntryName = string.format("-Item-:%s",Name)
+  NewEntry.Description = EntryName
+  NewEntry.Address  = pItem+0x58
+  NewEntry.ID = 90000
+
+  Item=Item+0x8
+end
+
+return "assert(true)"
+
+[DISABLE]
+
+
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>26783</ID>
+              <Description>"Delete Item Entries In Table"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+local addressList = getAddressList()
+------------------------------------
+------------------------------------
+------------------------------------
+local addressListObjects = {}
+for i,v in ipairs(addressList) do
+ if (string.find(v.Description, "-Item-")) then
+    table.insert(addressListObjects,v)
+ end
+end
+for i,v in ipairs(addressListObjects) do
+   memoryrecord_delete(v)
+end
+
+ 
+return "assert(true)"
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>11</ID>
+          <Description>"Add Card To Inventory"</Description>
+          <LastState/>
+          <Color>808000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+
+[ENABLE]
+
+CardFlag = getAddressSafe( "bAddCard" )
+writeBytes( CardFlag, 0x01)
+sleep(500)
+pCard = getAddressSafe( "[pCard]" )
+pCard = readPointer( pCard+0x10 )
+pCard  = readString( pCard +0x14,30,true )
+print(string.format("Card Added : %s", pCard))
+
+return "assert(true)"
+
+[DISABLE]
+
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>9</ID>
+              <Description>"Card ID:"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:Pibble
+1:Pibble
+2:Pibble
+3:Dog
+4:Dog
+5:Dog
+6:Small Rat
+7:Small Rat
+8:Small Rat
+9:Rat
+10:Rat
+11:Rat
+12:Slime
+13:Slime
+14:Slime
+15:bat
+16:bat
+17:bat
+18:Spider
+19:Spider
+20:Spider
+21:Dark Spider
+22:Dark Spider
+23:Dark Spider
+24:Sand Hopper
+25:Sand Hopper
+26:Sand Hopper
+27:Snake
+28:Snake
+29:Snake
+30:Sand Creeper
+31:Sand Creeper
+32:Sand Creeper
+33:Crab
+34:Crab
+35:Crab
+36:Yellow Snake
+37:Yellow Snake
+38:Yellow Snake
+39:Large Bat
+40:Large Bat
+41:Large Bat
+42:Decayed Rat
+43:Decayed Rat
+44:Decayed Rat
+45:Tree Fox
+46:Tree Fox
+47:Tree Fox
+48:Coaled Tree Fox
+49:Coaled Tree Fox
+50:Coaled Tree Fox
+51:Big Slime
+52:Big Slime
+53:Big Slime
+54:Bloodied Slime
+55:Bloodied Slime
+56:Bloodied Slime
+57:Blood Snake
+58:Blood Snake
+59:Blood Snake
+60:Grub
+61:Grub
+62:Grub
+63:Desert Worm
+64:Desert Worm
+65:Desert Worm
+66:Living Cactus
+67:Living Cactus
+68:Living Cactus
+69:Flowered Flowered
+70:Flowered Flowered
+71:Flowered Flowered
+72:Golden Rat
+73:Golden Rat
+74:Golden Rat
+75:Undead Bat
+76:Undead Bat
+77:Undead Bat
+78:Ice Bat
+79:Ice Bat
+80:Ice Bat
+81:Fire Bat
+82:Fire Bat
+83:Fire Bat
+84:Bodymorph
+85:Bodymorph
+86:Bodymorph
+87:Cursed Bodymorph
+88:Cursed Bodymorph
+89:Cursed Bodymorph
+90:Fungus
+91:Fungus
+92:Fungus
+93:Tempered fungus
+94:Tempered fungus
+95:Tempered fungus
+96:Undead Crawler
+97:Undead Crawler
+98:Undead Crawler
+99:Goblin Fawn
+100:Goblin Fawn
+101:Goblin Fawn
+102:Goblin Leader
+103:Goblin Leader
+104:Goblin Leader
+105:Goblin Elite
+106:Goblin Elite
+107:Goblin Elite
+108:Toisen
+109:Toisen
+110:Toisen
+111:Horned Toisen
+112:Horned Toisen
+113:Horned Toisen
+114:Poison Serpent
+115:Poison Serpent
+116:Poison Serpent
+117:Fire Melter
+118:Fire Melter
+119:Fire Melter
+120:Earthed Melter
+121:Earthed Melter
+122:Earthed Melter
+123:Wolf
+124:Wolf
+125:Wolf
+126:Ice Crab
+127:Ice Crab
+128:Ice Crab
+129:Fire Crab
+130:Fire Crab
+131:Fire Crab
+132:Naric Cub
+133:Naric Cub
+134:Naric Cub
+135:Skeleton
+136:Skeleton
+137:Skeleton
+138:Skeleton Priest
+139:Skeleton Priest
+140:Skeleton Priest
+141:Skeleton Knight
+142:Skeleton Knight
+143:Skeleton Knight
+144:Pincake
+145:Pincake
+146:Pincake
+147:Golden Pincake
+148:Golden Pincake
+149:Golden Pincake
+150:Alligator
+151:Alligator
+152:Alligator
+153:Water Gern
+154:Water Gern
+155:Water Gern
+156:Lamohttel
+157:Lamohttel
+158:Lamohttel
+159:Thalope
+160:Thalope
+161:Thalope
+162:Silver Thalope
+163:Silver Thalope
+164:Silver Thalope
+165:Sand Crawler
+166:Sand Crawler
+167:Sand Crawler
+168:Horned Sand Crawler
+169:Horned Sand Crawler
+170:Horned Sand Crawler
+171:KlhonBard
+172:KlhonBard
+173:KlhonBard
+174:Sinister KlhonBard
+175:Sinister KlhonBard
+176:Sinister KlhonBard
+177:Fire Florun
+178:Fire Florun
+179:Fire Florun
+180:Ice Florun
+181:Ice Florun
+182:Ice Florun
+183:Earth Florun
+184:Earth Florun
+185:Earth Florun
+186:Kobold Peasant
+187:Kobold Peasant
+188:Kobold Peasant
+189:Kobold Figther
+190:Kobold Figther
+191:Kobold Figther
+192:Kobold Crusader
+193:Kobold Crusader
+194:Kobold Crusader
+195:Sattaricus
+196:Sattaricus
+197:Sattaricus
+198:Hirn
+199:Hirn
+200:Hirn
+201:Nature Blessed Hirn
+202:Nature Blessed Hirn
+203:Nature Blessed Hirn
+204:Camel
+205:Camel
+206:Camel
+207:Hollow Camel
+208:Hollow Camel
+209:Hollow Camel
+210:Grintel
+211:Grintel
+212:Grintel
+213:Ice Moth
+214:Ice Moth
+215:Ice Moth
+216:Forge Moth
+217:Forge Moth
+218:Forge Moth
+219:Forgotton Soul
+220:Forgotton Soul
+221:Forgotton Soul
+222:Curfian Rogue
+223:Curfian Rogue
+224:Curfian Rogue
+225:Curfian Sharp Shooter
+226:Curfian Sharp Shooter
+227:Curfian Sharp Shooter
+228:Curfian Range Lord
+229:Curfian Range Lord
+230:Curfian Range Lord
+231:Wine-Wolf
+232:Wine-Wolf
+233:Wine-Wolf
+234:Golden Wine-Wolf
+235:Golden Wine-Wolf
+236:Golden Wine-Wolf
+237:Naric Beast
+238:Naric Beast
+239:Naric Beast
+240:Death Moth
+241:Death Moth
+242:Death Moth
+243:Tempered Alligator
+244:Tempered Alligator
+245:Tempered Alligator
+246:Serpent King
+247:Serpent King
+248:Serpent King
+249:Nightmare Wolf
+250:Nightmare Wolf
+251:Nightmare Wolf
+252:Trollkyn Peasant
+253:Trollkyn Peasant
+254:Trollkyn Peasant
+255:Trollkyn Hammerlord
+256:Trollkyn Hammerlord
+257:Trollkyn Hammerlord
+258:Trollkyn Champion
+259:Trollkyn Champion
+260:Trollkyn Champion
+261:Undead Tower Knight
+262:Undead Tower Knight
+263:Undead Tower Knight
+264:Undead Summoner
+265:Undead Summoner
+266:Undead Summoner
+267:Undead Hammer Knight
+268:Undead Hammer Knight
+269:Undead Hammer Knight
+270:Serphini
+271:Serphini
+272:Serphini
+273:Mutant
+274:Mutant
+275:Mutant
+276:Mutant Dark
+277:Mutant Dark
+278:Mutant Dark
+279:Pulpyt
+280:Pulpyt
+281:Pulpyt
+282:Bleeding Pulpyt
+283:Bleeding Pulpyt
+284:Bleeding Pulpyt
+285:Snowman
+286:Snowman
+287:Snowman
+288:Orijaw
+289:Orijaw
+290:Orijaw
+291:Dark Orijaw
+292:Dark Orijaw
+293:Dark Orijaw
+294:Fire Naiad
+295:Fire Naiad
+296:Fire Naiad
+297:Ice Naiad
+298:Ice Naiad
+299:Ice Naiad
+300:Earth Naiad
+301:Earth Naiad
+302:Earth Naiad
+303:Light Naiad
+304:Light Naiad
+305:Light Naiad
+306:Lutrak
+307:Lutrak
+308:Lutrak
+309:Ancient Soul
+310:Ancient Soul
+311:Ancient Soul
+312:Rhagdolos Grunt
+313:Rhagdolos Grunt
+314:Rhagdolos Grunt
+315:Rhagdolos Knight
+316:Rhagdolos Knight
+317:Rhagdolos Knight
+318:Rhagdolos Champion
+319:Rhagdolos Champion
+320:Rhagdolos Champion
+321:Horned Honoriut
+322:Horned Honoriut
+323:Horned Honoriut
+324:Hellhound
+325:Hellhound
+326:Hellhound
+327: Silver Alligator
+328: Silver Alligator
+329: Silver Alligator
+330:Minotaur
+331:Minotaur
+332:Minotaur
+333:Minotaur Healer
+334:Minotaur Healer
+335:Minotaur Healer
+336:Minotaur King
+337:Minotaur King
+338:Minotaur King
+339:Vampire Scavenger
+340:Vampire Scavenger
+341:Vampire Scavenger
+342:Vampire Priest
+343:Vampire Priest
+344:Vampire Priest
+345:Vampire Queen
+346:Vampire Queen
+347:Vampire Queen
+348:Skinrit
+349:Skinrit
+350:Skinrit
+351:Skinrit Magi
+352:Skinrit Magi
+353:Skinrit Magi
+354:Skinrit Tormentor
+355:Skinrit Tormentor
+356:Skinrit Tormentor
+357:Flame Serphini
+358:Flame Serphini
+359:Flame Serphini
+360:Frost Serphini
+361:Frost Serphini
+362:Frost Serphini
+363:Cursed Serphini
+364:Cursed Serphini
+365:Cursed Serphini
+366:Holy Serphini
+367:Holy Serphini
+368:Holy Serphini
+369:Benny
+370:Benny
+371:Benny
+372:Max
+373:Max
+374:Max
+375:Balhound
+376:Balhound
+377:Balhound
+378:Death Balhound
+379:Death Balhound
+380:Death Balhound
+381:Lync
+382:Lync
+383:Lync
+384:Feral Lync
+385:Feral Lync
+386:Feral Lync
+387:Unigriff
+388:Unigriff
+389:Unigriff
+390:Manticore
+391:Manticore
+392:Manticore
+393:Falhorn
+394:Falhorn
+395:Falhorn
+396:Shi-chan
+397:Shi-chan
+398:Shi-chan
+399:Flewfie
+400:Flewfie
+401:Flewfie
+402:Firewrought Spirit
+403:Firewrought Spirit
+404:Firewrought Spirit
+405:Frosted Spirit
+406:Frosted Spirit
+407:Frosted Spirit
+408:Earthforged Spirit
+409:Earthforged Spirit
+410:Earthforged Spirit
+411:Shadowed Spirit
+412:Shadowed Spirit
+413:Shadowed Spirit
+414:Brightened Spirit
+415:Brightened Spirit
+416:Brightened Spirit
+417:Wraith
+418:Wraith
+419:Wraith
+420:Wraith King
+421:Wraith King
+422:Wraith King
+423:Loviebun
+424:Loviebun
+425:Loviebun
+426:Ruined Deadknight
+427:Ruined Deadknight
+428:Ruined Deadknight
+429:Deadknight Conqueror
+430:Deadknight Conqueror
+431:Deadknight Conqueror
+432:Snow Trawler
+433:Snow Trawler
+434:Snow Trawler
+435:Yeti
+436:Yeti
+437:Yeti
+438:Yeti Dark
+439:Yeti Dark
+440:Yeti Dark
+441:Molten Bane
+442:Molten Bane
+443:Molten Bane
+444:Frozen Bane
+445:Frozen Bane
+446:Frozen Bane
+447:Rock Bane
+448:Rock Bane
+449:Rock Bane
+450:Shadow Bane
+451:Shadow Bane
+452:Shadow Bane
+453:Kusmuti Demon
+454:Kusmuti Demon
+455:Kusmuti Demon
+456:HorScremmer
+457:HorScremmer
+458:HorScremmer
+459:Foul HorScremmer
+460:Foul HorScremmer
+461:Foul HorScremmer
+462:Felworm
+463:Felworm
+464:Felworm
+465:Crypt Felworm
+466:Crypt Felworm
+467:Crypt Felworm
+468:Ice Shard
+469:Ice Shard
+470:Ice Shard
+471:Spirit Walker
+472:Spirit Walker
+473:Spirit Walker
+474:Bloodied Spirit Walker
+475:Bloodied Spirit Walker
+476:Bloodied Spirit Walker
+477:Eye of Apion
+478:Eye of Apion
+479:Eye of Apion
+480:Frost Spawn
+481:Frost Spawn
+482:Frost Spawn
+483:Ice Demon
+484:Ice Demon
+485:Ice Demon
+486:Wyvern
+487:Wyvern
+488:Wyvern
+489:Silver Wyvern
+490:Silver Wyvern
+491:Silver Wyvern
+492:Hypocron
+493:Hypocron
+494:Hypocron
+495:Darkened Hypocron
+496:Darkened Hypocron
+497:Darkened Hypocron
+498:Demonspawn
+499:Demonspawn
+500:Demonspawn
+501:Emperor Demonspawn
+502:Emperor Demonspawn
+503:Emperor Demonspawn
+504:Enlightened Bane
+505:Enlightened Bane
+506:Enlightened Bane
+507:Rainbird
+508:Rainbird
+509:Rainbird
+510:Lich
+511:Lich
+512:Lich
+513:Lich Warlock
+514:Lich Warlock
+515:Lich Warlock
+516:Fire Dragon
+517:Fire Dragon
+518:Fire Dragon
+519:Ice Dragon
+520:Ice Dragon
+521:Ice Dragon
+522:Earth Dragon
+523:Earth Dragon
+524:Earth Dragon
+525:Dark Dragon
+526:Dark Dragon
+527:Dark Dragon
+528:Light Dragon
+529:Light Dragon
+530:Light Dragon
+531:Golden Dragon
+532:Golden Dragon
+533:Golden Dragon
+534:Valchist
+535:Valchist
+536:Valchist
+537:Valchist King
+538:Valchist King
+539:Valchist King
+</DropDownList>
+              <LastState Value="0" RealAddress="2499BE10135"/>
+              <Color>000000</Color>
+              <VariableType>4 Bytes</VariableType>
+              <Address>iCardID</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26822</ID>
+          <Description>"Add Item To Inventory"</Description>
+          <LastState/>
+          <Color>808000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+
+[ENABLE]
+local Inv = getAddressSafe( "[pCInventory]")
+
+if Inv == 0 then showMessage("Open Inventory First") error("") return end
+
+ItemFlag = getAddressSafe( "bAddItem" )
+writeBytes( ItemFlag, 0x01)
+sleep(500)
+pItem = getAddressSafe( "[pItem]" )
+pItem = readPointer( pItem+0x10 )
+pItem = readPointer( pItem+0x18 )
+pItem  = readString( pItem +0x14,30,true )
+print(string.format("Item Added : %s", pItem))
+
+return "assert(true)"
+
+[DISABLE]
+
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>26820</ID>
+              <Description>"Item ID:"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:Gold
+1:Apple
+2:Peach
+3:Pear
+4:Red Berries
+5:Black Berries
+6:Floo Fruit
+7:Potato
+8:Carrot
+9:Cabbage
+10:Bread Roll S
+11:Bread Roll M
+12:Bread Roll L
+13:Raw Meat S
+14:Raw Meat M
+15:Raw Meat L
+16:Raw Meat Legendary
+17:Cooked Meat S
+18:Cooked Meat M
+19:Cooked Meat L
+20:Easy Seasoning S
+21:Easy Seasoning M
+22:Easy Seasoning L
+23:Cooking Salt
+24:Special Sauce
+25:Lemon
+26:Honey
+27:Rich Baste
+28:Legendary Mushroom
+29:Cold Onion
+30:Fire Beans
+31:Crystal Salts
+32:Water
+33:Apple Juice
+34:Berry Brew
+35:Potato Brew
+36:Health Potion S
+37:Health Potion M
+38:Health Potion L
+39:Mana Potion S
+40:Mana Potion M
+41:Mana Potion L
+42:Power Potion S
+43:Power Potion M
+44:Power Potion L
+45:Haste Potion S
+46:Haste Potion M
+47:Haste Potion L
+48:Brain Potion S
+49:Brain Potion M
+50:Brain Potion L
+51:Elixer S
+52:Elixer M
+53:Elixer L
+54:Aura Tea S
+55:Aura Tea M
+56:Aura Tea L
+57:Enlightened Tea S
+58:Enlightened Tea M
+59:Enlightened Tea L
+60:Radiant Tea S
+61:Radiant Tea M
+62:Radiant Tea L
+63:Legendary Tea S
+64:Legendary Tea M
+65:Legendary Tea L
+66:Bandage S
+67:Bandage M
+68:Bandage L
+69:Eyedrops
+70:Scented Salts
+71:Healing Salve
+72:Bottled Leech
+73:Sticky Paste
+74:Experience Scroll
+75:Strength Scroll
+76:Dexterity Scroll
+77:Endurance Scroll
+78:Intelligence Scroll
+79:Wisdom Scroll
+80:Beast-Tale Scroll
+81:Merchant Scroll
+82:Stealth Scroll
+83:Swift Wing
+84:Crystal Bean
+85:Spawn Portal Stone
+86:Infusion Crystals S
+87:Infusion Crystals M
+88:Infusion Crystals L
+89:Catalyst S
+90:Catalyst M
+91:Catalyst L
+92:Smelly Broth
+93:Potato Soup
+94:Veg Soup
+95:Fried Rat Tail
+96:Fried Rat Tail Salad
+97:Meat Salad
+98:Basic Salad
+99:Fish Salad
+100:Boring Meat
+101:Boring Veg
+102:Boring Fish
+103:Honey-Salt Meat
+104:Special Veg
+105:Zesty Fish
+106:Poached Fish
+107:Sweet Veg &amp; Potato
+108:Special Roasted Meat
+109:Fried Shellfish
+110:Feast Of Meat
+111:Feast Of Veg
+112:Feast Of Fish
+113:Meat Master Bake
+114:Veg Master Bake
+115:Fish Master Bake
+116:Plate Of The Dawn Gods
+117:Basic Fishing Rod
+118:Elm Fishing Rod
+119:Lucky Fishing Rod
+120:Fishing Rod of Power
+121:Legendary Fishing Rod
+122:Bread Fish Bait
+123:Worm Fish Bait
+124:Juicy-Worm Fish Bait
+125:Sticky-Magic Fish Bait
+126:Dirty Fish
+127:Plump Fish
+128:Striped Fish
+129:Great Fish
+130:Pike Fish
+131:Boops Boops Fish
+132:Flat Fish
+133:Red Salmon Fish
+134:Blue Salmon Fish
+135:Flounder Fish
+136:BigJaw Fish
+137:Benny Fish
+138:Grouper Fish
+139:Golden Fish
+140:Black Eel
+141:Fairy Fish
+142:Mega Bass Fish
+143:King Carp Fish
+144:Rainbow Fish
+145:Legendary Fish
+146:Prawn
+147:Crab
+148:Lobster
+149:Gross Frog
+150:Frog King
+151:Crystal Shard S
+152:Crystal Shard M
+153:Crystal Shard L
+154:Jeweler's Crystal S
+155:Jeweler's Crystal M
+156:Jeweler's Crystal L
+157:Potent Jeweler's Crystal S
+158:Potent Jeweler's Crystal M
+159:Potent Jeweler's Crystal L
+160:Power Gem
+161:Power Gem
+162:Power Gem
+163:Power Gem
+164:Power Gem
+165:Power Gem
+166:Power Gem
+167:Power Gem
+168:Power Gem
+169:Power Gem
+170:Power Gem
+171:Power Gem
+172:Power Gem
+173:Power Gem
+174:Power Gem
+175:Power Gem
+176:Power Gem
+177:Power Gem
+178:Power Gem
+179:Power Gem
+180:Power Gem
+181:Power Gem
+182:Power Gem
+183:Power Gem
+184:Power Gem
+185:Power Gem
+186:Power Gem
+187:Power Gem
+188:Power Gem
+189:Power Gem
+190:Power Gem
+191:Snare-Trap S
+192:Snare-Trap M
+193:Snare-Trap L
+194:Creature Bait S
+195:Creature Bait M
+196:Creature Bait L
+197:Creature Food (Str)
+198:Creature Food (End)
+199:Creature Food (Itl)
+200:Morph Stone S
+201:Morph Stone M
+202:Morph Stone L
+203:Morph Stone Legendary
+204:Linen S
+205:Linen M
+206:Linen L
+207:Quality Linen S
+208:Quality Linen M
+209:Quality Linen L
+210:Brilliant Linen S
+211:Brilliant Linen M
+212:Brilliant Linen L
+213:Legendary Linen S
+214:Legendary Linen M
+215:Legendary Linen L
+216:Pick-Axe
+217:Magic Pick-Axe
+218:Legendary Pick-Axe
+219:Iron Ore S
+220:Iron Ore M
+221:Iron Ore L
+222:Gold Ore S
+223:Gold Ore M
+224:Gold Ore L
+225:Frost Ore S
+226:Frost Ore M
+227:Frost Ore L
+228:Warm Ore S
+229:Warm Ore M
+230:Warm Ore L
+231:Dark Ore S
+232:Dark Ore M
+233:Dark Ore L
+234:Light Ore S
+235:Light Ore M
+236:Light Ore L
+237:Legendary Ore S
+238:Legendary Ore M
+239:Legendary Ore L
+240:Iron Ingot S
+241:Iron Ingot M
+242:Iron Ingot L
+243:Steel Ingot S
+244:Steel Ingot M
+245:Steel Ingot L
+246:Gold Ingot S
+247:Gold Ingot M
+248:Gold Ingot L
+249:Frost Ingot S
+250:Frost Ingot M
+251:Frost Ingot L
+252:Warm Ingot S
+253:Warm Ingot M
+254:Warm Ingot L
+255:Dark Ingot S
+256:Dark Ingot M
+257:Dark Ingot L
+258:Light Ingot S
+259:Light Ingot M
+260:Light Ingot L
+261:Legendary Ingot S
+262:Legendary Ingot M
+263:Legendary Ingot L
+264:Charcoal
+265:Quality Charcoal
+266:Legendary Charcoal
+267:Leg Trap S
+268:Leg Trap M
+269:Leg Trap L
+270:Arrow-Burst Trap S
+271:Arrow-Burst Trap M
+272:Arrow-Burst Trap L
+273:Fire Bomb S
+274:Fire Bomb M
+275:Fire Bomb L
+276:Ice Storm S
+277:Ice Storm M
+278:Ice Storm L
+279:Earth Spike S
+280:Earth Spike M
+281:Earth Spike L
+282:Dark void S
+283:Dark void M
+284:Dark void L
+285:Summon Trap S
+286:Summon Trap M
+287:Summon Trap L
+288:Wooden Sword
+289:Iron Sword
+290:Iron Long Sword
+291:Iron Estoc
+292:Iron Arming Sword
+293:Iron Hanger
+294:Steel Sword
+295:Steel Long Sword
+296:Steel Estoc
+297:Steel Arming Sword
+298:Steel Hanger
+299:Gold Sword
+300:Gold Long Sword
+301:Gold Estoc
+302:Gold Arming Sword
+303:Gold Hanger
+304:Cavalry Long Sword
+305:Fallen Baselard
+306:Soul Baselard
+307:Sinrock Edge
+308:Hero Blade
+309:Baneic Wedge
+310:Ancient Spirit Blade
+311:Vicious Falchion
+312:Dragon Scimitar
+313:Dragon Estoc
+314:Dragon Baselard
+315:Sword of Valchist
+316:Dawn Soul-Cutter
+317:Heavy Sword
+318:Iron Bastard Sword
+319:Iron Great Sword
+320:Iron Claymore
+321:Heavy Iron Claymore
+322:Iron Sabbotius
+323:Steel Bastard Sword
+324:Steel Great Sword
+325:Steel Claymore
+326:Heavy Steel Claymore
+327:Steel Sabbotius
+328:Gold Bastard Sword
+329:Gold Great Sword
+330:Gold Claymore
+331:Heavy Gold Claymore
+332:Gold Sabbotius
+333:Ceremonial Bastard Sword
+334:Heavy Crust
+335:Bone Claymore
+336:Sinrock Soul
+337:Hero-Heart Sword
+338:Baneic Colossus
+339:Ancient Spirit Sabbotius
+340:Feather Claymore
+341:Dragon Great Sword
+342:Dragon-Tooth Edge
+343:Heavy Dragon Claymore
+344:Claymore of Valchist
+345:Dawn Sabbotius
+346:Wooden Axe
+347:Iron Hatchet
+348:Long Iron Hatchet
+349:Iron Axe
+350:Iron Double-Axe
+351:Iron Battle Axe
+352:Steel Hatchet
+353:Long Steel Hatchet
+354:Steel Axe
+355:Steel Double-Axe
+356:Steel Battle Axe
+357:Gold Hatchet
+358:Long Gold Hatchet
+359:Gold Axe
+360:Gold Double-Axe
+361:Gold Battle Axe
+362:Ornamental Axe
+363:Bone Axe
+364:Heavy Hatchet
+365:Sinrock Battle Axe
+366:Hero Long Axe
+367:Baneic Swing
+368:Ancient Spirit Dobule-Axe
+369:Sharpened Double-Axe
+370:Long Dragon Hatchet
+371:Dragoon-Tooth Axe
+372:Dragon Battle Axe
+373:Valchist Whisper
+374:Dawn's Lord Axe
+375:Wooden Long Cleaver
+376:Iron Long Cleaver
+377:Iron Broad Axe
+378:Iron Great Axe
+379:Iron Dane Axe
+380:Iron Giant Axe
+381:Steel Long Cleaver
+382:Steel Broad Axe
+383:Steel Great Axe
+384:Steel Dane Axe
+385:Steel Giant Axe
+386:Gold Long Cleaver
+387:Gold Broad Axe
+388:Gold Great Axe
+389:Gold Dane Axe
+390:Gold Giant Axe
+391:Officer's Cleaver
+392:Bone Great Axe
+393:Heavy Chopper
+394:Sinrock Great Splitter
+395:Hero's Wreck
+396:Baneic Giant Axe
+397:Ancient Spirit Great Axe
+398:Spiked Giant Axe
+399:Dragon Etched Broad Axe
+400:Dragon Great Axe
+401:Giant Dragon-Tooth Axe
+402:Valchist Storm-Axe
+403:Fallen Dawn Giant Axe
+404:Wooden Sharpstick
+405:Iron Pole
+406:Iron Spear
+407:Iron Long Spear
+408:Iron Lance
+409:Iron Halberd
+410:Steel Pole
+411:Steel Spear
+412:Steel Long Spear
+413:Steel Lance
+414:Steel Halberd
+415:Gold Pole
+416:Gold Spear
+417:Gold Long Spear
+418:Gold Lance
+419:Gold Halberd
+420:Ceremonial Lance
+421:Bone Spear
+422:Edged Pike
+423:Sinrock Impaler
+424:Hero Soul Spear
+425:Baneic Great Spear
+426:Ancient Spirit Halberd
+427:Lance of Justice
+428:Dragon Short Spear
+429:Dragon-Toothed Pike
+430:Dragon Great Lance
+431:Valchist Energy Lance
+432:Great Dawn Halberd
+433:Wooden Club
+434:Iron Club
+435:Iron Mace
+436:Iron-Spiked Mace
+437:Iron Flail
+438:Iron Hammer
+439:Steel Club
+440:Steel Mace
+441:Steel-Spiked Mace
+442:Steel Flail
+443:Steel Hammer
+444:Gold Club
+445:Gold Mace
+446:Gold-Spiked Mace
+447:Gold Flail
+448:Gold Hammer
+449:Relic Mace
+450:Boned Hammer
+451:Unwieldy Club
+452:Sinrock Smasher
+453:Forked Hero Hammer
+454:Baneic Breaker
+455:Ancient Spirit Hammer
+456:Knight's Morning Star
+457:Dragon Mace
+458:Dragon-Bone Hammer
+459:Dragon-Toothed Flail
+460:Valchist Crusher
+461:Dread-Hammer of Dawn
+462:Heavy Club
+463:Iron Long Hammer
+464:Iron Bludgeon
+465:Iron War Mace
+466:Iron Heavy Club
+467:Iron War Hammer
+468:Steel Long Hammer
+469:Steel Bludgeon
+470:Steel War Mace
+471:Steel Heavy Club
+472:Steel War Hammer
+473:Gold Long Hammer
+474:Gold Bludgeon
+475:Gold War Mace
+476:Gold Heavy Club
+477:Gold War Hammer
+478:Ornamental War Mace
+479:Hollow Bludgeon
+480:Great Hammer
+481:Break of Sinrock
+482:Hero Soul Hammer
+483:Baneic Skull-Crusher
+484:Ancient Spirit Reckoning
+485:Crusader's War Hammer
+486:Heavy Dragon Club
+487:Dragon-Toothed War Hammer
+488:Dragon Great Mace
+489:Quake of Valchist
+490:Mighty Dawn Crusher
+491:Glowing Stick
+492:Wooden Wand
+493:Wooden Infused Wand
+494:Wooden Mid-Staff
+495:Wooden Staff
+496:Wooden Augmenter
+497:Oak Wand
+498:Oak Infused Wand
+499:Oak Mid-Staff
+500:Oak Staff
+501:Oak Augmenter
+502:Elm Wand
+503:Elm Infused Wand
+504:Elm Mid-Staff
+505:Elm Staff
+506:Elm Augmenter
+507:Wizard's Pride
+508:Spell-Glazed Wand
+509:Curved Staff
+510:Sinrock Soul-Staff
+511:Hero's Bleak Spite
+512:Baneic Charm
+513:Ancient Spirit Great Staff
+514:Hero's Blight
+515:Dragon Quick-Wand
+516:Dragon Soul-Staff
+517:Dragon Myst Light
+518:Witch of Valchist
+519:Dawn Spirit
+520:Wooden Shiv
+521:Iron Shard
+522:Iron Dragger
+523:Iron Short Sword
+524:Iron Rondel
+525:Iron Quick-Blade
+526:Steel Shard
+527:Steel Dagger
+528:Steel Short Sword
+529:Steel Rondel
+530:Steel Quick-Blade
+531:Gold Shard
+532:Gold Dagger
+533:Gold Short Sword
+534:Gold Rondel
+535:Gold Quick-Blade
+536:Officer's Dagger
+537:Double Blade
+538:Assassin Blade
+539:Sinrock Silender
+540:Hero Sword
+541:Baneic Sharp-Sword
+542:Ancient Spirit Slicer
+543:Rogue Blade
+544:Dragon Dagger
+545:Sharpened Dragon-Tooth
+546:Dragon Nyxblade
+547:Valchist Tear Shard
+548:Edge of Dawn
+549:Crude Short Bow
+550:Oak Short Bow
+551:Oak Long Bow
+552:Oak Light Bow
+553:Oak Recurve Bow
+554:Oak Fortified Bow
+555:Steel Short Bow
+556:Steel Long Bow
+557:Steel Light Bow
+558:Steel Recurve Bow
+559:Steel Fortified Bow
+560:Gold Short Bow
+561:Gold Long Bow
+562:Gold Light Bow
+563:Gold Recurve Bow
+564:Gold Fortified Bow
+565:Ceremonial Bow
+566:Quick-Bow
+567:Assassin Bow
+568:Sinrock Striker
+569:Hero's Double Bow
+570:Baneic Long Bow
+571:Ancient Spirit Bow
+572:Ghost Bow
+573:Dragon Quick-Bow
+574:Dragon-Bone Long Bow
+575:Dragon Great Bow
+576:Shadow of Valchist
+577:Reign of Dawn
+578:Crude Crossbow
+579:Oak Crossbow
+580:Heavy Oak Crossbow
+581:Great Oak Crossbow
+582:Tuned Oak Crossbow
+583:Giant Oak Crossbow
+584:Steel Crossbow
+585:Heavy Steel Crossbow
+586:Great Steel Crossbow
+587:Tuned Steel Crossbow
+588:Giant Steel Crossbow
+589:Gold Crossbow
+590:Heavy Gold Crossbow
+591:Great Gold Crossbow
+592:Tuned Gold Crossbow
+593:Giant Gold Crossbow
+594:Turtle Crossbow
+595:Spreadshot Crossbow
+596:Protector's Crossbow
+597:Sinrock Crossbow
+598:Tainted Hero Crossbow
+599:Great Baneic Crossbow
+600:Ancient Spirit Crossbow
+601:Double Crossbow
+602:Dragon Crossbow
+603:Giant Dragon Crossbow
+604:Dragon Piercer
+605:Giant Valchist Crossbow
+606:Dawn Wrecker
+607:Wooden Arrow
+608:Elm Arrow
+609:Barbed Arrow
+610:Bone Arrow
+611:Iron Arrow
+612:Steel Arrow
+613:Gold Arrow
+614:Curfian Fine-Arrow
+615:Fire Arrow
+616:Ice Arrow
+617:Earth Arrow
+618:Dark Arrow
+619:Light Arrow
+620:Shadow Forge Arrow
+621:Dragon Arrow
+622:Wooden Crossbow Bolt
+623:Iron Crossbow Bolt
+624:Steel Crossbow Bolt
+625:Gold Crossbow Bolt
+626:Tempered Crossbow Bolt
+627:Soldier's Crossbow Bolt
+628:Knight's Crossbow Bolt
+629:Champion's Crossbow Bolt
+630:Fire Crossbow Bolt
+631:Ice Crossbow Bolt
+632:Earth Crossbow Bolt
+633:Dark Crossbow Bolt
+634:Light Crossbow Bolt
+635:Shadow Force Bolt
+636:Dragon Crossbow Bolt
+637:Green Gloop
+638:Red Gloop
+639:Blue Gloop
+640:Acid Gloop
+641:Fungal Gloop
+642:Bone Proj
+643:Pulse
+644:Blood Shard
+645:Water Shot
+646:Crystal Burst
+647:Arrow Trap
+648:Wooden Plank
+649:Snake-Skin Shield
+650:Light Snake-Skin Shield
+651:Snake-Skin Buckler
+652:Studded Snake-Skin Shield
+653:Snake-Skin Protector
+654:Steel Shield
+655:Light Steel Shield
+656:Steel Buckler
+657:Studded Steel
+658:Steel Protector
+659:Gold Shield
+660:Light Gold Shield
+661:Gold Buckler
+662:Studded Gold Shield
+663:Gold Protector
+664:Light Ceremonial Shield
+665:Bone Buckler
+666:Shadow Buckler
+667:Sinrock Shield
+668:Hero Studded Shield
+669:Baneic Plate
+670:Ancient Spirit Buckler
+671:Ghost Shield
+672:Dragon-Toothed Buckler
+673:Light Dragon Shield
+674:Dragon Protector
+675:Valchist Blocker
+676:Protector of Dawn
+677:Kite Shield
+678:Iron Kite Shield
+679:Heavy Iron Shield
+680:Iron Heater Shield
+681:Iron Tower Shield
+682:Iron Great Shield
+683:Steel Kite Shield
+684:Heavy Steel Shield
+685:Steel Heater Shield
+686:Steel Tower Shield
+687:Steel Great Shield
+688:Gold Kite Shield
+689:Heavy Gold Shield
+690:Gold Heater Shield
+691:Gold Tower Shield
+692:Gold Great Shield
+693:Ceremonial Kite Shield
+694:Heavy Bone Shield
+695:Rock Shield
+696:Sinrock Heater Shield
+697:Hero Soul Kite Shield
+698:Baneic Tower Shield
+699:Ancient Spirit Great Shield
+700:Knight's Realm Great Shield
+701:Dragon Kite Shield
+702:Dragon-Toothed Heater Shield
+703:Dragon-Hide Great Shield
+704:Stance of Valchist
+705:Dawn's Last Stand
+706:Cloth Bandana
+707:Snake-Skin Bandana
+708:Snake-Skin Cap
+709:Snake-Skin Hood
+710:Steel-Chain Cap
+711:Steel-Chain Hood
+712:Steel-Chain Cowl
+713:Gold-Chain Cap
+714:Gold-Chain Hood
+715:Gold-Chain Cowl
+716:Black Hood
+717:Assassin's Cowl
+718:Felworm Hood
+719:Spirit-Worn Hood
+720:Baneic Soul Viel
+721:Ancient Spirit Coif
+722:Cowl of Deceit
+723:Dragon Hood
+724:Studded Dragon-Toothed Coif
+725:Crypt Lich Hood
+726:Crystal Dawn Crown
+727:Cloth Vest
+728:Snake-Skin Vest
+729:Snake-Skin Jacket
+730:Studded Snake-Skin Jacket
+731:Steel-Chain Vest
+732:Steel-Chain Jacket
+733:Steel-Chain Mail
+734:Gold-Chain Vest
+735:Gold-Chain Jacket
+736:Gold-Chain Mail
+737:Black Chain Mail
+738:Assassin's Vest
+739:Felworm Jacket
+740:Spirit-Worn Jacket
+741:Baneic Soul Mail
+742:Ancient Spirit Mail
+743:Brigandine of Deceit
+744:Dragon Mail
+745:Dragon-Toothed Brigandine
+746:Crypt Lich Jacket
+747:Crystal Dawn Brigandine
+748:Cloth Cuffs
+749:Snake-Skin Cuffs
+750:Snake-Skin Bracers
+751:Studded Snake-Skin Bracers
+752:Steel-Chain Cuffs
+753:Steel-Chain Bracers
+754:Steel-Chain Vambraces
+755:Gold-Chain Cuffs
+756:Gold-Chain Bracers
+757:Gold-Chain Vambraces
+758:Black Cuffs
+759:Assassin's Bracers
+760:Felworm Cuffs
+761:Spirit-Worn Bracers
+762:Baneic Soul Vambraces
+763:Ancient Spirit Cuffs
+764:Vambraces of Deceit
+765:Dragon-Scaled Bracers
+766:Dragon-Scaled Vambraces
+767:Crypt Lich Bracers
+768:Crystal Dawn Vambraces
+769:Cloth Gloves
+770:Snake-Skin Mitts
+771:Snake-Skin Gloves
+772:Studded Snake-Skin Gloves
+773:Steel-Chain Mitts
+774:Steel-Chain Gloves
+775:Studded Steel-Chain Gloves
+776:Gold-Chain Mitts
+777:Gold-Chain Gloves
+778:Studded Gold-Chain Gloves
+779:Black Gloves
+780:Assassin's Gloves
+781:Felworm Mits
+782:Spirit-Worn Mitts
+783:Baneic Soul Gloves
+784:Ancient Spirit Gloves
+785:Gloves of Deceit
+786:Dragon Mitts
+787:Dragon Gloves
+788:Crypt Lich Gloves
+789:Crystal Dawn Gloves
+790:Cloth Shorts
+791:Snake-Skin Shorts
+792:Snake-Skin Leggings
+793:Studded Snake-Skin Leggings
+794:Steel-Chain Shorts
+795:Steel-Chain Leggings
+796:Studded Steel-Chain Leggings
+797:Gold-Chain Shorts
+798:Gold-Chain Leggings
+799:Studdent Gold-Chain Leggings
+800:Black Leggings
+801:Assassin's Leggings
+802:Felworm Shorts
+803:Spirit-Worn Leggings
+804:Baneic Soul Leggings
+805:Ancient Spirit Leggings
+806:Leggings of Deceit
+807:Dragon Leggings
+808:Dragon-Scaled Chausses
+809:Crypt Lich Leggings
+810:Crystal Dawn Chausses
+811:Cloth Sandals
+812:Snake-Skin Sandals
+813:Snake-Skin Shoes
+814:Snake-Skin Boots
+815:Steel-Chain Shoes
+816:Steel-Chain Boots
+817:Steel-Chain High Boots
+818:Gold-Chain Shoes
+819:Gold-Chain Boots
+820:Gold-Chain High Boots
+821:Black Boots
+822:Assassin's Shoes
+823:Felworm Boots
+824:Spirit-Worn Boots
+825:Baneic Soul High Boots
+826:Ancient Spirit Boots
+827:Boots of Deceit
+828:Dragon Boots
+829:Dragon High Boots
+830:Crypt Lich Boots
+831:Crystal Dawn High Boots
+832:Wooden Helm
+833:Iron Half-Helm
+834:Iron Helm
+835:Iron Barbute
+836:Steel Kettle Hat
+837:Steel Helm
+838:Steel Barbute
+839:Gold Kettle Hat
+840:Gold Helm
+841:Gold Barbute
+842:Cavalier Helm
+843:Sturdy Kettle Hat
+844:Naric-Scaled Helm
+845:Champion's Bascinet
+846:Baneic Heart Full-Helm
+847:Ancient Spirit Barbute
+848:Fallen Knight Helm
+849:Dragon Helm
+850:Dragon Barbute
+851:Wraith King Helm
+852:Dawn Ruler Barbute
+853:Wood-Plated Brigandine
+854:Iron Mail
+855:Iron PlateMail
+856:Iron Hauberk
+857:Steel PlateMail
+858:Steel Hauberk
+859:Steel Cuirass
+860:Gold PlateMail
+861:Gold Hauberk
+862:Gold Cuirass
+863:Cavalier Mail
+864:Sturdy Plate Mail
+865:Naric-Scaled Hauberk
+866:Champion's Platemail
+867:Baneic Heart Cuirass
+868:Ancient Spirit Hauberk
+869:Fallen Knight Cuirass
+870:Dragon Plate Mail
+871:Dragon Cuirass
+872:Wraith King Hauberk
+873:Dawn Ruler Cuirass
+874:Wooden Plated Bracers
+875:Iron Bracers
+876:Iron Rerebraces
+877:Iron Vambraces
+878:Steel Bracers
+879:Steel Rerebraces
+880:Steel Vambraces
+881:Gold Bracers
+882:Gold Rerebraces
+883:Gold Vambraces
+884:Cavalier Bracers
+885:Sturdy Rerebraces
+886:Naric-Scaled Vambraces
+887:Champion's Rerebraces
+888:Baneic Heart Vambraces
+889:Ancient Spirit Vambraces
+890:Fallen Knight Vambraces
+891:Dragon Plate Bracers
+892:Dragon Plate Vambraces
+893:Wraith King Rerebraces
+894:Dawn Ruler Vambraces
+895:Wooden Plated Gloves
+896:Iron Gloves
+897:Iron Gauntlets
+898:Iron Plate-Gauntlets
+899:Steel Gloves
+900:Steel Gauntlets
+901:Steel Plate-Gauntlets
+902:Gold Gloves
+903:Gold Gauntlets
+904:Gold Plate-Gauntlets
+905:Cavalier Gauntlets
+906:Sturdy Gauntlets
+907:Naric-Scaled Gauntlets
+908:Champion Gauntlets
+909:Baneic Heart Gauntlets
+910:Ancient Spirit Gauntlets
+911:Fallen Knight Gauntlets
+912:Dragon-Scaled Gauntlets
+913:Dragon Plate-Gauntlets
+914:Wraith King Gauntlets
+915:Dawn Ruler Plate-Gauntlets
+916:Wood Plated Schynbald
+917:Iron Schynbalds
+918:Iron Chausses
+919:Iron Greaves
+920:Steel Schynbalds
+921:Steel Chausses
+922:Steel Greaves
+923:Gold Schynbalds
+924:Gold Chausses
+925:Gold Greaves
+926:Cavalier Schynbalds
+927:Sturdy Chausses
+928:Naric-Scaled Chausses
+929:Champion Greaves
+930:Baneic Heart Chausses
+931:Ancient Spirit Greaves
+932:Fallen Knight Greaves
+933:Dragon Scaled Schynbalds
+934:Dragon Plate Greaves
+935:Wraith King Chausses
+936:Dawn Ruler Plate Greaves
+937:Wood Plated Shoes
+938:Iron Tipped Shoes
+939:Iron Plated Shoes
+940:Iron Sabatons
+941:Steel Tipped Shoes
+942:Steel Plated Shoes
+943:Steel Sabatons
+944:Gold Tipped Shoes
+945:Gold Plated Shoes
+946:Gold Sabatons
+947:Cavalier Sabatons
+948:Sturdy Sabatons
+949:Naric-Scaled Sabatons
+950:Champion Sabatons
+951:Baneic Heart Sabatons
+952:Ancient Spirit Sabatons
+953:Fallen Knight Sabatons
+954:Dragon Plated Shoes
+955:Dragon Sabatons
+956:Wraith King Sabatons
+957:Dawn Ruler Sabatons
+958:Cotton Hat
+959:Silk Hat
+960:Silk Hood
+961:Dimlit Crown
+962:Spellweave Hat
+963:Spellweave Hood
+964:Naiad Wing-Laced Hood
+965:Naiad Spell-Crown
+966:Shaman Hood
+967:Mage Lore Hood
+968:Caster's Diadam
+969:Unwavering Crown
+970:Bone-Soul Crown
+971:Hollowcurse Crown
+972:Baneic Mind Diadam
+973:Red Spirit Hood
+974:Deathmare Crown
+975:Dragonweave Hat
+976:Dragon-Tooth Crown
+977:Demon Soul Crown
+978:Dawn Warlock Crown
+979:Cotton Tunic
+980:Silk Vest
+981:Silk Tunic
+982:Dimlit Robe
+983:Spellweave Tunic
+984:Spellweave Robe
+985:Naiad Wing-Laced Robe
+986:Naiad Spell-Vestment
+987:Shaman Robe
+988:Mage Lore Tunic
+989:Caster's Vestment
+990:Unwavering Robe
+991:Bone-Soul Vestment
+992:Hollowcurse Robe
+993:Baneic Mind Robe
+994:Red Spirit Robe
+995:Deathmare Vestment
+996:Dragonweave Tunic
+997:Dragon-Tooth Robe
+998:Demon Soul Robe
+999:Dawn Warlock Vestment
+1000:Cotton Wraps
+1001:Silk Bracelets
+1002:Silk Wraps
+1003:Dimlit Cuffs
+1004:Spellweave Bracelets
+1005:Spellweave Wraps
+1006:Naiad Wing-Laced Cuffs
+1007:Naiad Spell-Wraps
+1008:Shaman Wraps
+1009:Mage Lore Bracelets
+1010:Caster's Wraps
+1011:Unwavering Wraps
+1012:Bone-Soul Bracelets
+1013:Hollowcurse Wraps
+1014:Baneic Mind Wraps
+1015:Red Spirit Bracelets
+1016:Deathmare Bracelets
+1017:Dragonweave Wraps
+1018:Dragon-Tooth Bracelets
+1019:Demon Soul Wraps
+1020:Dawn Warlock Bracelets
+1021:Cotton Gloves
+1022:Silk Gloves
+1023:Silk Hand-Charms
+1024:Dimlit Hand-Charms
+1025:Spellweave Gloves
+1026:Spellweave Hand-Charms
+1027:Naiad Wing-Laced Gloves
+1028:Naiad Spell Hand-Charms
+1029:Shaman Gloves
+1030:Mage Lore Gloves
+1031:Caster's Hand-Charms
+1032:Unwavering Gloves
+1033:Bone-Soul Hand-Charms
+1034:Hollowcurse Gloves
+1035:Baneic Mind Hand-Charms
+1036:Red Spirit Gloves
+1037:Deathmare Gloves
+1038:Dragonweave Gloves
+1039:Dragon-Tooth Hand-Charms
+1040:Demon Soul Gloves
+1041:Dawn Warlock Hand-Charms
+1042:Cotton Shorts
+1043:Silk Shorts
+1044:Silk Leg Wraps
+1045:Dimlit Leg Wraps
+1046:Spellweave Shorts
+1047:Spellweave Leg Wraps
+1048:Naiad Wing-Laced Leg Wraps
+1049:Naiad Spell Hose
+1050:Shaman Leg Wraps
+1051:Mage Lore Hose
+1052:Caster's Leg Wraps
+1053:Unwavering Leg Wraps
+1054:Bone-Soul Waist Robes
+1055:Hollowcurse Leg Wraps
+1056:Baneic Mind Waist Robes
+1057:Red Spirit Leg Wraps
+1058:Deathmare Waist Robes
+1059:Dragonweave Leg Wraps
+1060:Dragon-Tooth Waist Robes
+1061:Demon Soul Leg Wraps
+1062:Dawn Warlock Waist Robes
+1063:Cotton Boots
+1064:Silk Shoes
+1065:Silk Boots
+1066:Gem Boots
+1067:Spellweave Shoes
+1068:Spellweave Gem Boots
+1069:Naiad Wing-Laced Boots
+1070:Naiad Spell Gem Boots
+1071:Shaman Boots
+1072:Mage Lore Gem Boots
+1073:Caster's Boots
+1074:Unwavering Gem Boots
+1075:Bone-Soul Gem Boots
+1076:Hollowcurse Boots
+1077:Baneic Mind Gem Boots
+1078:Red Spirit Boots
+1079:Deathmare Gem Boots
+1080:Dragonweave Boots
+1081:Dragon-Tooth Gem Boots
+1082:Demon Soul Boots
+1083:Dawn Warlock Gem Boots
+1084:Wriggling Spider Leg
+1085:Heated Snake-Skin
+1086:Curdling Sludge
+1087:Cursed Bone
+1088:Unrotting Flesh
+1089:Weightless Skull
+1090:Black Feather
+1091:Curfian Soul
+1092:Silent Stone
+1093:Miniature Knights Shield
+1094:Warrior's Heart
+1095:Strength of The Giants
+1096:Kobold's 3rd Eye
+1097:Dying Blessing
+1098:Ancient Trinket
+1099:Freezing Dragon Eye
+1100:Glowing Dragon Tooth
+1101:Valchist Malevolence
+1102:Light of Shadows
+1103:Everburning Dawn
+1104:Cloth Wrap
+1105:Snake Lined Cape
+1106:Fur Cape
+1107:Dark Cape
+1108:Mantle of Shadows
+1109:Flaked Cloak
+1110:Feathered Wrap
+1111:Storm Pleated Cloak
+1112:Shadow-Lined Cape
+1113:Heavy Cloak
+1114:Knight's Mantle
+1115:Power Shield Cape
+1116:Glowing Neck Wrap
+1117:Hollowcore Cape
+1118:Cloak of Curses
+1119:Dragon-Scaled Cape
+1120:Dragon Hide Mantle
+1121:Valchist Breath-Laced Mantle
+1122:Cloak of the Damned
+1123:Mantle of the Fallen Dawn
+1124:Cloth Belt
+1125:Snake Lined Belt
+1126:Fur Belt
+1127:Dark Belt
+1128:Shadow Belt
+1129:Flaked Belt
+1130:Feathered Belt
+1131:Storm Caught Belt
+1132:Shadow-Lined Belt
+1133:Heavy Belt
+1134:Knight's Belt
+1135:PowerForge_Belt
+1136:Glowing Belt
+1137:Hollowcore Belt
+1138:Cursed Belt
+1139:Dragon-Scaled Belt
+1140:Dragon Hide Belt
+1141:Valchist Tongue Belt
+1142:Belt of the Damned
+1143:Dawn-Caught Belt
+1144:Leather Necklace
+1145:Spider-Fang Necklace
+1146:Snake-Skin Necklace
+1147:Goblin-Craft Necklace
+1148:Amulet From Beyond
+1149:Boned Necklace
+1150:Cursed Wing Necklace
+1151:Feather-Light Necklace
+1152:Shadow Born Amulet
+1153:Amulet of Strength
+1154:Core Burnt Necklace
+1155:Tower Knight Amulet
+1156:Blight Worn Necklace
+1157:Fallen Charm
+1158:Lich Amulet
+1159:Imp Crest
+1160:Soul of Sinrock
+1161:Blood-Torn Amulet
+1162:Dragon-Fang Necklace
+1163:Dragon-Heart Amulet
+1164:Dragon-Fire Charm
+1165:Scream of Valchist
+1166:Damned Amulet
+1167:Amulet of the Forgotten Dawn
+1168:Brittle Ring
+1169:Iron Ring
+1170:Steel Ring
+1171:Gold Ring
+1172:Rat Tail Ring
+1173:Spider Fang Ring
+1174:Bone Crusted Ring
+1175:Sunken Gem Ring
+1176:Goblin-Craft Ring
+1177:Naiad Glow Ring
+1178:Gem-Heat Ring
+1179:Potion Blast Ring
+1180:Novice Craft Ring
+1181:Adept Craft Ring
+1182:Master Craft Ring
+1183:Ultimate Craft Ring
+1184:Cursed Summon Ring
+1185:Bewitched Stone Ring
+1186:Tainted Soul Ring
+1187:Forgotten Prayer Ring
+1188:Rogue Stone Ring
+1189:Knight Borne Ring
+1190:Warlock Ring
+1191:Creature Conquest Ring
+1192:Sea Calling Ring
+1193:Jilted Stone Ring
+1194:Ring of the Free
+1195:Sinrock Commander's Ring
+1196:Lich-Scream Ring
+1197:Vampire Blood-Infused Ring
+1198:Camel Hump Ring
+1199:Arachnida Ring
+1200:Unigriff Ring
+1201:Deathmare Ring
+1202:Serated Edge Ring
+1203:Weightless Ring
+1204:Craft Tongue Ring
+1205:Silver Made Ring
+1206:Ring of Haste
+1207:Song of the Strong
+1208:Hollowcurse Ring
+1209:Demon Eye Ring
+1210:Demon Spawn Ring
+1211:Black Ring
+1212:Dragon-Stone Ring
+1213:Dragon-Tooth Ring
+1214:Dragon-Scale Ring
+1215:Lava Dragon Ring
+1216:Valchist Stone Ring
+1217:Ring of the First Dawn
+1218:Leisure Book
+1219:Story Book
+1220:Tales of Old
+1221:Mama's Recipes
+1222:Fish Whisperer
+1223:The Old Pickaxe
+1224:Anvil Confessions
+1225:Identifying Gems
+1226:What Creature's Say
+1227:Crash-Crash-Boom
+1228:Spell Talk
+1229:Book of Agility
+1230:Book of Protection
+1231:Book of the Mind
+1232:Level-Me-Up!
+1233:Sounds of the Broke
+1234:Valchist Unwoke
+1235:Story of Our Dawn
+1236:Rat Tooth
+1237:Rat Tail
+1238:Golden Rat Fur
+1239:Rat Eye
+1240:Spider Leg
+1241:Spider Web
+1242:Queen Spider Sac
+1243:Green Snake Skin
+1244:Gold Snake Skin
+1245:Red Snake Skin
+1246:Desert Snake Skin
+1247:Rainbow Snake Skin
+1248:Snake Fang
+1249:Serpent Tongue
+1250:Serpent Crown
+1251:Bat Wing
+1252:Bat Fang
+1253:Bat Ear
+1254:Slippery Slime
+1255:Plauged Goo
+1256:Poison Goo
+1257:Fire Salts
+1258:Cursed Salts
+1259:Earthed Salts
+1260:Flexible Skin
+1261:Living Muscle
+1262:Fungus
+1263:Decaying Fungus
+1264:Crab Horn
+1265:Crab Leg
+1266:Frozen Crab Eye
+1267:Heated Crab Shell
+1268:Wolf Pelt
+1269:Wolf Tail
+1270:Wolf Fang
+1271:Black-Wolf Heart
+1272:Grub Fat
+1273:Grub Egg
+1274:Moth Wing
+1275:Cold Moth Eye
+1276:Dark Moth-Dust
+1277:Alligator Tooth
+1278:Alligator Skin
+1279:Silver Alligator Skin
+1280:Naric Scale
+1281:Flamed Naric Scale
+1282:Naric Horn
+1283:Lurtak Blubber
+1284:Lurtak Tongue
+1285:Lurtak Horn
+1286:Falhorn Feather
+1287:Falhorn Egg
+1288:Rainbird Feather
+1289:Rainbird Egg
+1290:Kusmuti Tongue
+1291:Kusmuti Heart
+1292:Lamohttel Face
+1293:Lamohttel Wool
+1294:Goblin Eye
+1295:Goblin Ear
+1296:Goblin Blood
+1297:Goblin Skin
+1298:Kobold Nose
+1299:Kobold Tongue
+1300:Kobold Foot
+1301:Kobold Salts
+1302:Curfian Skin
+1303:Curfian Skull
+1304:Curfian Soul Fragment
+1305:Curfian Bone
+1306:Rhagdolos Hair
+1307:Rhagdolos Horn
+1308:Rhagdolos Brain
+1309:Rhagdolos Scale
+1310:Skinrit Bone
+1311:Skinrit Fin
+1312:Skinrit Scale
+1313:Skinrit Skull
+1314:Minotaur Horn
+1315:Minotaur Hoof
+1316:Minotaur Tooth
+1317:Minotaur Skull
+1318:Trollkyn Skull
+1319:Trollkyn Bladder
+1320:Trollkyn Eye
+1321:Trollkyn Tusk
+1322:Naiad Wing
+1323:Naiad Blessing
+1324:Naiad Heart
+1325:Naiad Skull
+1326:Bone
+1327:Bewitched Bone
+1328:Sodden Bone
+1329:Skull
+1330:Dying Skull
+1331:Fragile Skull
+1332:Fire Spirit-Salts
+1333:Ice Spirit-Salts
+1334:Earth Spirit-Salts
+1335:Dark Spirit-Salts
+1336:Light Spirit-Salts
+1337:Glowing Spirit-Salts
+1338:Red Demon Wing
+1339:Dark Demon Wing
+1340:Red Demon Horn
+1341:Dark Demon Horn
+1342:Hellhound Fur
+1343:Ghost Soul
+1344:Ghost Blood
+1345:Ghost Bone
+1346:Wraith Gem
+1347:Wraith Cloak
+1348:Spirit-Walker Heart
+1349:Deep Spirit-Walker Deep
+1350:Deadknight Shard
+1351:Deadknight Skull
+1352:Deadknight Soul
+1353:Deadknight Heart
+1354:Red Felworm Hide
+1355:Gold Felworm Hide
+1356:Dark Felworm Hide
+1357:Red Felworm Scale
+1358:Gold Felworm Scale
+1359:Dark Felworm Scale
+1360:Gold Felworm Horn
+1361:Dark Felworm Horn
+1362:Hor Scremmer Bone
+1363:Hor Scremmer Heart
+1364:Hor Scremmer Tusk
+1365:Lich Fang
+1366:Lich Blood
+1367:Lich Skull
+1368:Lich Spirit
+1369:Vampire Tissue
+1370:Vampire Bone
+1371:Bane Shard
+1372:Bane Crystal
+1373:Bane Rock
+1374:Pincake Mushroom
+1375:Grintel Heart
+1376:Mystic Grintel Bone
+1377:Lync Skull
+1378:Lync Wing
+1379:Apion Eye
+1380:Apion Tentacle
+1381:Serphini Scale
+1382:Melted Serphini Scale
+1383:Frosted Serphini Scale
+1384:Hollow Serphini Scale
+1385:Bright Serphini Scale
+1386:Thalope Antler
+1387:Toisen Shell
+1388:Toisen Horn
+1389:Green Hirn Scale
+1390:Dull Hirn Scale
+1391:Tropical Hirn Scale
+1392:Hirn Horn
+1393:Orijaw Tooth
+1394:Orijaw Tongue
+1395:Balhound Horn
+1396:Balhound Heart
+1397:Unigriff Wing
+1398:Unigriff Horn
+1399:Manticore Horn
+1400:Honoriut Tooth
+1401:Honoriut Horn
+1402:KlhonBard Pipe
+1403:KlhonBard Jaw
+1404:Sattaricus Blade
+1405:Sattaricus Gel
+1406:Pulpyt Sap
+1407:Pulpyt Talon
+1408:Flamed Florun Petal
+1409:Iced Florun Petal
+1410:Rooted Florun Petal
+1411:Flamed Florun Pollen
+1412:Iced Florun Pollen
+1413:Rooted Florun Pollen
+1414:Treefox Ear
+1415:Treefox Skull
+1416:Mutant Bone
+1417:Mutant Goo
+1418:Berry-Wolf Fang
+1419:Sandcrawler Scale
+1420:Sandcrawler Horn
+1421:Desert Worm Guts
+1422:Sand Creeper Dust
+1423:Camel Hoof
+1424:Camel Hump
+1425:Cactus Sap
+1426:Cactus Spike
+1427:SandHopper Tail
+1428:Snow Ball
+1429:Yeti Skull
+1430:Yeti Gem
+1431:Yeti Claw
+1432:Shard of Ice
+1433:Snow Trawler Skull
+1434:Snow Trawler Hair
+1435:Frost Spawn Wing
+1436:Frost Spawn Heart
+1437:Ice Demon Jaw
+1438:Ice Demon Claw
+1439:Green Wyvern Wing
+1440:Dark Wyvern Wing
+1441:Light Wyvern Wing
+1442:Blood Wyvern Wing
+1443:Hypocron Beak
+1444:Hypocron String
+1445:Dragon Horn
+1446:Flamed Dragon Scale
+1447:Cold Dragon Scale
+1448:Rooted Dragon Scale
+1449:Hollow Dragon Scale
+1450:Bright Dragon Scale
+1451:Golden Dragon Scale
+1452:Molten Dragon Core
+1453:Valchist Horn
+1454:Valchist Heart
+1455:Ashwick Sewer Key
+1456:Special Ingredients
+1457:Red Ry Key
+1458:Green Ry Key
+1459:Blue Ry Key
+1460:Cal's Tunnel Key
+1461:Camel License
+1462:Slate of Poetry
+1463:Magic Saw
+1464:Stolen Goods
+1465:Stuffed Toy
+1466:Lost Artefact
+1467:Lost Armour Trinket
+1468:Alchemist's Gift Box
+1469:Broken Broach
+1470:Repaired Broach
+1471:Ancestral Ladder
+1472:Harry the Wolf's Toy
+1473:Big John Key
+1474:Rena's Cellar Key
+1475:Handwritten Recipe List
+1476:Halstorm Gate Key 1
+1477:Halstorm Gate Key 2
+1478:Great Ice Key
+1479:Scorn of Hell Key
+</DropDownList>
+              <LastState Value="0" RealAddress="2499BE1013C"/>
+              <VariableType>4 Bytes</VariableType>
+              <Address>iItemID</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>26789</ID>
+      <Description>"[Pointer]"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{$lua}
+function string.fromhex( s )
+    return ( s:gsub( '..', function ( cc )
+        return string.char( tonumber( cc, 16 ) )
+    end ) )
+end
+
+function aobScanSmall( aob, s, e )
+  local i = byteTableToString( readBytes( s, e, true ) ):find( string.fromhex( aob ), 1, true )
+  if i == nil then i = 1 end
+  return ( s + i - 1 )
+end
+
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+
+local pGetEntityStatic = getAddressSafe("cGameChanger:ability_GiveCoin_AllPlayers")
+local pGetEntityStatic = aobScanSmall( '48B8', pGetEntityStatic,0x100)
+
+local pMem = allocateMemory( 64 )
+unregisterSymbol( "cEntityArray" )
+registerSymbol( "cEntityArray", pMem, true )
+
+local pEntitieArray =  readQword( pGetEntityStatic + 0x02)
+pEntitieArray = readPointer(pEntitieArray)
+writeQword(pMem + 0x00, pEntitieArray)
+
+
+[DISABLE]
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>90076</ID>
+          <Description>"--------------------------------"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <Address/>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26839</ID>
+          <Description>"Find Skill Pointer"</Description>
+          <LastState/>
+          <Color>808000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+
+[ENABLE]
+
+local addressList = getAddressList()
+------------------------------------
+------------------------------------
+------------------------------------
+local addressListObjects = {}
+for i,v in ipairs(addressList) do
+ if (string.find(v.Description, "-Skill-")) then
+    table.insert(addressListObjects,v)
+ end
+end
+for i,v in ipairs(addressListObjects) do
+   memoryrecord_delete(v)
+end
+
+------------------------------------
+------------------------------------
+------------------------------------
+
+
+ --local Skills = {"Melee", "Long Sword", "Great Sword", "Axe",
+ --           "Great Axe", "Pole Arm", "Blunt",
+ --           "Great Blunt", "Dagger", "Markmanship", "Bow",
+ --           "Crossbow", "Magical Staff", "Magic Restoration",
+ --           "Fire Magic", "Ice Magic", "Earth Magic", "Dark Magic",
+ --           "Light Magic", "Agile Armour", "Heavy Armour",
+ --           "Magic Armour", "Melee Defence", "Magic Defence", "Cooking",
+ --           "Fishing", "Mining", "Smelting",
+ --           "Jewel Smith", "Weapon Smith", "Armour Smith", "Magic Weaving",
+ --          "Alchemy", "Creature Capture", "Creature Rearing", "Stealth", "Bartering"}
+
+
+local pEntities = getAddressSafe( "[cEntityArray]" )
+
+if pEntities == 0 then showMessage("No Entities") error("No Entities") return end
+
+local Input = inputQuery( '', 'Character ID:\n0 or 1 or 2\n(probably 0)', '' )
+local CharID = tonumber( Input, 10 )
+
+if CharID &gt; 2 then showMessage("Invalid ID") error("") return end
+
+showMessage("skill pointers added to the bottom of the table")
+
+if CharID &gt; 0 then
+  CharID = CharID * 8
+end
+
+pEntities = pEntities + 0x20 + CharID
+
+local cEntity = readPointer(pEntities)
+local mPlayerData = readPointer(cEntity+0x90)
+local mSkill = readPointer(mPlayerData+0xB0)
+
+local c = readInteger(mSkill+0x18)
+
+local FirstSkillData = mSkill+0x20
+
+for i=0,c do
+    local szName = readPointer(FirstSkillData)
+    szName = readPointer(szName+0x10)
+    szName = readPointer(szName+0x10)
+    szName = readPointer(szName+0x10)
+    szName = readString( szName+0x14,99,true )
+    local mLevel = readPointer(FirstSkillData)
+    NewEntry = addressList.createMemoryRecord()
+    local EntryName = string.format("-Skill-:%s",szName)
+    NewEntry.Description = EntryName
+    NewEntry.Address  = mLevel+0x18
+    NewEntry.ID = 90000
+    FirstSkillData=FirstSkillData+0x8
+end
+
+return "assert(true)"
+
+[DISABLE]
+
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>90075</ID>
+              <Description>"Delete Skill Entries In Table"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+{$lua}
+if syntaxcheck then return end
+local addressList = getAddressList()
+------------------------------------
+------------------------------------
+------------------------------------
+local addressListObjects = {}
+for i,v in ipairs(addressList) do
+ if (string.find(v.Description, "-Skill-")) then
+    table.insert(addressListObjects,v)
+ end
+end
+for i,v in ipairs(addressListObjects) do
+   memoryrecord_delete(v)
+end
+
+ 
+return "assert(true)"
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>90079</ID>
+          <Description>"--------------------------------"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <Address/>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>26790</ID>
+              <Description>"[Name]"</Description>
+              <LastState RealAddress="24989C9CC74"/>
+              <Color>804000</Color>
+              <VariableType>String</VariableType>
+              <Length>25</Length>
+              <Unicode>1</Unicode>
+              <CodePage>0</CodePage>
+              <ZeroTerminate>1</ZeroTerminate>
+              <Address>cEntityArray</Address>
+              <Offsets>
+                <Offset>14</Offset>
+                <Offset>D0</Offset>
+                <Offset>90</Offset>
+                <Offset>20</Offset>
+              </Offsets>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>26799</ID>
+                  <Description>"HP"</Description>
+                  <LastState Value="402.2000122" RealAddress="24982E3F170"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>170</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26791</ID>
+                  <Description>"HP Max"</Description>
+                  <LastState Value="402.2000122" RealAddress="24982E3F174"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>174</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26792</ID>
+                  <Description>"MP"</Description>
+                  <LastState Value="193" RealAddress="249831CEAE0"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>60</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26793</ID>
+                  <Description>"MP Max"</Description>
+                  <LastState Value="193" RealAddress="249831CEAE4"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>64</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26794</ID>
+                  <Description>"SP"</Description>
+                  <LastState Value="132" RealAddress="249831CEAE8"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>68</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26795</ID>
+                  <Description>"SP Max"</Description>
+                  <LastState Value="132" RealAddress="249831CEAEC"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>6C</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26796</ID>
+                  <Description>"XP"</Description>
+                  <LastState Value="46.40213013" RealAddress="249831CEAF8"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>78</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26797</ID>
+                  <Description>"XP To Next Level"</Description>
+                  <LastState Value="540" RealAddress="249831CEAFC"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>7C</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26798</ID>
+                  <Description>"Ability Coins"</Description>
+                  <LastState Value="11" RealAddress="249831CEC10"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>190</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26824</ID>
+                  <Description>"Strength"</Description>
+                  <LastState Value="24" RealAddress="2498343B6E0"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>20</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26825</ID>
+                  <Description>"Dexterity"</Description>
+                  <LastState Value="25" RealAddress="2498343B6E4"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>24</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26826</ID>
+                  <Description>"Endurance"</Description>
+                  <LastState Value="5" RealAddress="2498343B6E8"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>28</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26827</ID>
+                  <Description>"Intelligence"</Description>
+                  <LastState Value="5" RealAddress="2498343B6EC"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>2C</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26828</ID>
+                  <Description>"Wisdom"</Description>
+                  <LastState Value="5" RealAddress="2498343B6F0"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>30</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>20</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>90078</ID>
+          <Description>"--------------------------------"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <Address/>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>26800</ID>
+              <Description>"[Name]"</Description>
+              <LastState RealAddress="24989C9C5F4"/>
+              <Color>804000</Color>
+              <VariableType>String</VariableType>
+              <Length>25</Length>
+              <Unicode>1</Unicode>
+              <CodePage>0</CodePage>
+              <ZeroTerminate>1</ZeroTerminate>
+              <Address>cEntityArray</Address>
+              <Offsets>
+                <Offset>14</Offset>
+                <Offset>D0</Offset>
+                <Offset>90</Offset>
+                <Offset>28</Offset>
+              </Offsets>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>26801</ID>
+                  <Description>"HP"</Description>
+                  <LastState Value="312" RealAddress="24983378D70"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>170</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26802</ID>
+                  <Description>"HP Max"</Description>
+                  <LastState Value="312" RealAddress="24983378D74"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>174</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26803</ID>
+                  <Description>"MP"</Description>
+                  <LastState Value="185" RealAddress="24989EA8CA0"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>60</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26804</ID>
+                  <Description>"MP Max"</Description>
+                  <LastState Value="185" RealAddress="24989EA8CA4"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>64</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26805</ID>
+                  <Description>"SP"</Description>
+                  <LastState Value="130" RealAddress="24989EA8CA8"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>68</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26806</ID>
+                  <Description>"SP Max"</Description>
+                  <LastState Value="130" RealAddress="24989EA8CAC"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>6C</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26807</ID>
+                  <Description>"XP"</Description>
+                  <LastState Value="0" RealAddress="24989EA8CB8"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>78</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26808</ID>
+                  <Description>"XP To Next Level"</Description>
+                  <LastState Value="5" RealAddress="24989EA8CBC"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>7C</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26809</ID>
+                  <Description>"Ability Coins"</Description>
+                  <LastState Value="3" RealAddress="24989EA8DD0"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>190</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26834</ID>
+                  <Description>"Strength"</Description>
+                  <LastState Value="5" RealAddress="24989C17DE0"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>20</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26835</ID>
+                  <Description>"Dexterity"</Description>
+                  <LastState Value="5" RealAddress="24989C17DE4"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>24</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26836</ID>
+                  <Description>"Endurance"</Description>
+                  <LastState Value="5" RealAddress="24989C17DE8"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>28</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26837</ID>
+                  <Description>"Intelligence"</Description>
+                  <LastState Value="5" RealAddress="24989C17DEC"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>2C</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26838</ID>
+                  <Description>"Wisdom"</Description>
+                  <LastState Value="5" RealAddress="24989C17DF0"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>30</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>90077</ID>
+          <Description>"--------------------------------"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <Address/>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>26810</ID>
+              <Description>"[Name]"</Description>
+              <LastState RealAddress="24989C503A4"/>
+              <Color>804000</Color>
+              <VariableType>String</VariableType>
+              <Length>25</Length>
+              <Unicode>1</Unicode>
+              <CodePage>0</CodePage>
+              <ZeroTerminate>1</ZeroTerminate>
+              <Address>cEntityArray</Address>
+              <Offsets>
+                <Offset>14</Offset>
+                <Offset>D0</Offset>
+                <Offset>90</Offset>
+                <Offset>30</Offset>
+              </Offsets>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>26811</ID>
+                  <Description>"HP"</Description>
+                  <LastState Value="312" RealAddress="24983378B70"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>170</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26812</ID>
+                  <Description>"HP Max"</Description>
+                  <LastState Value="312" RealAddress="24983378B74"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>174</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26813</ID>
+                  <Description>"MP"</Description>
+                  <LastState Value="185" RealAddress="24989EA8920"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>60</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26814</ID>
+                  <Description>"MP Max"</Description>
+                  <LastState Value="185" RealAddress="24989EA8924"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>64</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26815</ID>
+                  <Description>"SP"</Description>
+                  <LastState Value="130" RealAddress="24989EA8928"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>68</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26816</ID>
+                  <Description>"SP Max"</Description>
+                  <LastState Value="130" RealAddress="24989EA892C"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>6C</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26817</ID>
+                  <Description>"XP"</Description>
+                  <LastState Value="0" RealAddress="24989EA8938"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>78</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26818</ID>
+                  <Description>"XP To Next Level"</Description>
+                  <LastState Value="5" RealAddress="24989EA893C"/>
+                  <VariableType>Float</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>7C</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26819</ID>
+                  <Description>"Ability Coins"</Description>
+                  <LastState Value="3" RealAddress="24989EA8A50"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>190</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26829</ID>
+                  <Description>"Strength"</Description>
+                  <LastState Value="5" RealAddress="24989C173E0"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>20</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26830</ID>
+                  <Description>"Dexterity"</Description>
+                  <LastState Value="5" RealAddress="24989C173E4"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>24</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26831</ID>
+                  <Description>"Endurance"</Description>
+                  <LastState Value="5" RealAddress="24989C173E8"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>28</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26832</ID>
+                  <Description>"Intelligence"</Description>
+                  <LastState Value="5" RealAddress="24989C173EC"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>2C</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>26833</ID>
+                  <Description>"Wisdom"</Description>
+                  <LastState Value="5" RealAddress="24989C173F0"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>cEntityArray</Address>
+                  <Offsets>
+                    <Offset>30</Offset>
+                    <Offset>48</Offset>
+                    <Offset>90</Offset>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>90081</ID>
+      <Description>""</Description>
+      <Options moHideChildren="1"/>
+      <LastState Value="" RealAddress="00000000"/>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>90080</ID>
+          <Description>"Quit Force Game"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+
+function QuitGame()
+  local method = mono_findMethod('UnityEngine', 'Application', 'Quit')
+  local domain = mono_enumDomains()[1]
+  local args={}
+  args[1]={}
+  args[1].type=vtDword
+  args[1].value=0x00 --first param : return code
+  mono_invoke_method(domain, method, 0, args) --public static - no instance needed
+  monopipe.destroy()
+  return "assert(true)"
+end
+
+[ENABLE]
+
+
+return QuitGame()
+
+
+[DISABLE]
+</AssemblerScript>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+  <Comments>UnityPlayer.dll+B53660 
+</Comments>
+</CheatTable>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="40">
+<FearlessRevolution>2906</FearlessRevolution>
+  <CheatEntries>
+    <CheatEntry>
+      <ID>521</ID>
+      <Description>"Enable Hacks"</Description>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript Async="1">[ENABLE]
+{$lua}
+local appDownloadURL = [[https://fearlessrevolution.com/app/]]
+local appName = 'Fearless Revolution App'
+local appDataFolderName = 'FearlessRevolution'
+local appDataFileName = 'location.txt'
+local sep = package.config:sub(1,1)
+
+local function exists(name)
+	if type(name) == 'string' then
+		return os.rename(name, name) and true or false
+	end
+end
+
+local function getAppLocation()
+    local dataFolder = os.getenv('APPDATA')..
+                        sep..appDataFolderName
+    local dataFile = dataFolder..sep..appDataFileName
+    local f, err = io.open(dataFile, 'r')
+    if f and not err then
+        local loc = f:read('*all')
+        f:close()
+        loc = loc:gsub('\n', ''):gsub('\r', '')
+        return loc
+    else
+        return ---- File not found
+    end
+end
+
+local function launchApp(appPath)
+	if type(appPath) == 'string' then
+		if exists(appPath) then
+			shellExecute(appPath, 2906)
+			sleep(1)
+			closeCE()
+		else
+			messageDialog(translate('Please rerun')..' '..appName..' '..
+				translate('to initialize setup for table.')..'\n'..
+				translate('Then close and reopen the table.'),
+				mtInformation, mbOK)
+		end
+	end
+end
+
+local appPath = getAppLocation()
+if type(appPath) == 'string' then
+	launchApp(appPath)
+else
+	messageDialog(translate('This cheat engine table is protected and requires FearlessRevolution app!\n\nPlease download')..' '..appName..'\n'..
+		translate('Then reopen this table after running the app for the initial setup.'),
+		mtInformation, mbOK)
+	shellExecute(appDownloadURL)
+end
+
+{$asm}
+[DISABLE]
+</AssemblerScript>
+    </CheatEntry>
+  </CheatEntries>
+  <LuaScript>local appDownloadURL = [[https://fearlessrevolution.com/app/]]
+local appName = 'Fearless Revolution App'
+local appDataFolderName = 'FearlessRevolution'
+local appDataFileName = 'location.txt'
+local sep = package.config:sub(1,1)
+
+local function exists(name)
+	if type(name) == 'string' then
+		return os.rename(name, name) and true or false
+	end
+end
+
+local function getAppLocation()
+    local dataFolder = os.getenv('APPDATA')..
+                        sep..appDataFolderName
+    local dataFile = dataFolder..sep..appDataFileName
+    local f, err = io.open(dataFile, 'r')
+    if f and not err then
+        local loc = f:read('*all')
+        f:close()
+        loc = loc:gsub('\n', ''):gsub('\r', '')
+        return loc
+    else
+        return ---- File not found
+    end
+end
+
+local function launchApp(appPath)
+	if type(appPath) == 'string' then
+		if exists(appPath) then
+			shellExecute(appPath, 2906)
+			sleep(1)
+			closeCE()
+		else
+			messageDialog(translate('Please rerun')..' '..appName..' '..
+				translate('to initialize setup for table.')..'\n'..
+				translate('Then close and reopen the table.'),
+				mtInformation, mbOK)
+		end
+	end
+end
+
+local appPath = getAppLocation()
+if type(appPath) == 'string' then
+	launchApp(appPath)
+else
+	messageDialog(translate('This cheat engine table is protected and requires FearlessRevolution app!\n\nPlease download')..' '..appName..'\n'..
+		translate('Then reopen the table after running the app for the initial setup.'),
+		mtInformation, mbOK)
+	shellExecute(appDownloadURL)
+end
+
+</LuaScript>
+</CheatTable>

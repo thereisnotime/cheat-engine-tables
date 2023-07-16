@@ -1,0 +1,1381 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="26">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>7</ID>
+      <Description>"My Script"</Description>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{$lua}
+
+local function hex(a, c)
+  if a == nil then
+    return "(nil)"
+  end
+  local fmt = "%X"
+  if type(c) == "number" then
+    fmt = "%0"..c.."X"
+  end
+  return string.format(fmt, a)
+end
+
+local function pointerSize()
+  if targetIs64Bit() then
+    return 8
+  end
+  return 4
+end
+
+local function readSignedInteger(a)
+  local v = readInteger(a)
+  if v ~= nil then
+    if v &gt; 0x7FFFFFFF then
+      v = -(0x100000000 - v)
+    end
+  end
+  return v
+end
+
+local function findRecord(parent, desc)
+  if parent == nil and memrec ~= nil then
+    parent = memrec
+  end
+  local found
+  if parent ~= nil and parent.Count &gt; 0 then
+    local i
+    for i = 0, parent.Count-1 do
+      if parent.Child[i].Description == desc then
+        found = parent.Child[i]
+      end
+    end
+  end
+  return found
+end
+
+local function updateRecord(parent, desc, type, addr, offsets)
+  if parent == nil and memrec ~= nil then
+    parent = memrec
+  end
+  local rec = findRecord(parent,desc)
+  if rec == nil then
+    rec = getAddressList().createMemoryRecord()
+    rec.Description = desc
+    rec.VarType = type
+    if addr ~= nil then
+      rec.setAddress(addr, offsets)
+    end
+    if parent ~= nil then
+      rec.appendToEntry(parent)
+    end
+  else
+    local a = rec.Address
+    if addr ~= a then
+      rec.setAddress(addr, offsets)
+    end
+  end
+  return rec
+end
+
+local cached = {}
+
+local function updatePath(path, desc, type, addr, offsets)
+  if memrec == nil then
+    return nil
+  end
+  local fullpath = ""
+  if path ~= nil and path ~= "" then
+    fullpath = path.."\\"..desc
+  else
+    fullpath = desc
+  end
+  local rec
+  if cached[fullpath] == nil or cached[fullpath].Parent == nil then
+    local i
+    local arr = {}
+    local parent
+    for i in string.gmatch(path, "[^\\]+") do
+      table.insert(arr, i)
+    end
+    if #arr &gt; 0 then
+      local item = table.remove(arr)
+      parent = updatePath(table.concat(arr, '\\'), item, "vtCustom", 0, {})
+    else
+      parent = memrec
+    end
+    rec = getAddressList().createMemoryRecord()
+    rec.Description = desc
+    rec.VarType = type
+    rec.setAddress(addr, offsets)
+    rec.appendToEntry(parent)
+    if type == "vtCustom" then
+      rec.IsGroupHeader = true
+    end
+    cached[fullpath] = rec
+  else
+    rec = cached[fullpath]
+    local a = rec.Address
+    if addr ~= a then
+      rec.setAddress(addr, offsets)
+    end
+  end
+  return cached[fullpath]
+end
+
+local function removePath(path)
+  if cached[path] ~= nil then
+    if cached[path].getAddress() ~= "" then
+      cached[path]:Delete()
+    end
+    cached[path] = nil
+  end
+end
+
+local function cleanupPath(path, list)
+  local pathlist = {}
+  local i,v
+  for i,v in pairs(list) do
+    table.insert(pathlist, path.."\\"..i)
+  end
+  for i,v in pairs(cached) do
+    if string.sub(i,1,string.len(path)+1) == path.."\\" then
+      local r,z
+      local found = false
+      for r,z in ipairs(pathlist) do
+        if i == z or string.sub(i,1,string.len(z)+1) == z.."\\" then
+          found = true
+          break
+        end
+      end
+      if not found then
+        removePath(i)
+      end
+    end
+  end
+end
+
+local function getHeader(parent, desc)
+  if parent == nil and memrec ~= nil then
+    parent = memrec
+  end
+  local rec = findRecord(parent,desc)
+  if rec == nil then
+    rec = getAddressList().createMemoryRecord()
+    rec.Description = desc
+    rec.IsGroupHeader = true
+    if parent ~= nil then
+      rec.appendToEntry(parent)
+    end
+  end
+  return rec
+end
+
+local function getFlag(desc)
+  local result = false
+  if memrec ~= nil then
+    local rec = findRecord(memrec, desc)
+    if rec == nil then
+      rec = getAddressList().createMemoryRecord()
+      rec.Description = desc
+      rec.IsGroupHeader = true
+      rec.appendToEntry(memrec)
+    end
+    result = rec.Active
+  end
+  return result
+end
+
+local function getCodeOffset(addr, off)
+  if addr == nil or addr == 0 then
+    return nil
+  end
+  local o = readSignedInteger(addr + off)
+  if o ~= nil then
+    return addr + o + off + 4
+  end
+  return nil
+end
+
+local function followAddress(addr, offs, debug)
+  local i
+  for i = 1,#offs do
+    if addr ~= nil then
+      local ot = type(offs[i])
+      if ot == "table" then
+        if type(offs[i]["offset"]) ~= "number" then
+          return nil
+        end
+        if offs[i]["rc"] == true then
+          addr = getCodeOffset(addr, offs[i]["offset"])
+        elseif offs[i]["r32"] == true then
+          addr = readInteger(addr + offs[i]["offset"])
+        else
+          addr = readPointer(addr + offs[i]["offset"])
+        end
+      elseif ot == "number" then
+        addr = readPointer(addr + offs[i])
+      else
+        return nil
+      end
+      if debug then
+        print("  "..hex(addr))
+      end
+    end
+  end
+  return addr
+end
+
+if timers == nil then
+  timers = {}
+end
+if aobscans == nil then
+  aobscans = {}
+end
+
+local function getTimer()
+  if memrec ~= nil then
+    local id = memrec.id
+    if timers[id] == nil then
+      timers[id] = createTimer()
+      timers[id].Enabled = false
+      timers[id].Interval = getFreezeTimer().Interval
+    end
+    return timers[id]
+  end
+  return nil
+end
+
+local function killTimer()
+  if memrec ~= nil then
+    local id = memrec.id
+    if timers[id] ~= nil then
+      timers[id]:Destroy()
+      timers[id] = nil
+    end
+  end
+end
+
+local function setScan(name, opts)
+  if memrec == nil then
+    return false
+  end
+  if aobscans[memrec.id] ~= nil then
+    aobscans[memrec.id][name] = nil
+  end
+  if opts["bytes"] == nil then
+    return false
+  end
+  local perm = opts["perm"]
+  if perm == nil then
+    perm = "-C-W+X" -- Not CopyOnWrite, Not Writable, but executable by default
+  end
+  local startaddress = 0
+  local endaddress = 0x7FFFFFFFFFFFFFFF
+  if opts["module"] ~= nil then
+    startaddress = getAddress(opts["module"])
+    endaddress = startaddress + getModuleSize(opts["module"])
+  end
+  local bytes = opts["bytes"]
+  local ms = createMemScan()
+  local success = false
+  if aobscans[memrec.id] == nil then
+    aobscans[memrec.id] = {}
+  end
+  if ms ~= nil then
+    ms.firstScan(soExactValue, vtByteArray, 0, bytes, "", startaddress, endaddress, perm, fsmNotAligned, "1", true, false, false, false)
+    ms.waitTillDone()
+    local fl = createFoundList(ms)
+    if fl ~= nil then
+      fl.initialize()
+      if fl.Count &gt; 0 then
+        aobscans[memrec.id][name] = {}
+        local i
+        for i=0,fl.Count-1 do
+          table.insert(aobscans[memrec.id][name], tonumber("0x"..fl.Address[i]))
+        end
+      end
+      fl:Destroy()
+    end
+    ms:Destroy()
+    if success then
+      return true
+    end
+  end
+  return false
+end
+
+local function setScans(list, perm)
+  local k,v
+  for k,v in pairs(list) do
+    setScan(k, v, perm)
+  end
+end
+
+local function getScan(name)
+  if memrec ~= nil then
+    local id = memrec.id
+    if aobscans[id] ~= nil then
+      if aobscans[id][name] ~= nil then
+        return aobscans[id][name]
+      end
+    end
+  end
+  return nil
+end
+
+local function forEach(startaddress, toaddress, itemsize, func)
+  if startaddress &lt; toaddress then
+    local addr = startaddress
+    while addr &lt; toaddress do
+      local r = func(addr)
+      if r == false then
+        break
+      end
+      addr = addr + itemsize
+    end
+  end
+end
+
+if syntaxcheck then
+  return
+end
+
+[ENABLE]
+
+--[[
+-- For Debugging
+local le = getLuaEngine()
+le.mOutput.Lines:Clear()
+le.cbShowOnPrint.Checked = false
+le:Show()
+]]--
+
+-- AOBScans here
+
+setScans({
+  main = {
+    bytes = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 49 8B 06",
+    module = "ELEX.exe"
+  },
+  jetpack = {
+    bytes = "48 8B 15 ?? ?? ?? ?? 8B C8 2B 8A",
+    module = "ELEX.exe"
+  }
+})
+
+local poi = {
+  tow = {
+    desc = "Top of the World",
+    x = 171.186696467868,
+    z = 1875.74657750033,
+    y = 3209.51171619998
+  },
+  acliff = { desc = "Abandoned Cliffs", x = -2223.251953125, z = 207.726501464844, y = -2787.51318359375 },
+  bisland = { desc = "Berserker Island", x = -1834.28125, z = 180.427871704102, y = -3075.95092773438 },
+  bsmith = { desc = "Blacksmith of Goliet", x = -1077.22521972656, z = 401.879465542734, y = -2218.09106445313 },
+  ccamp = { desc = "Camp in the Center", x = -1291.775390625, z = 508.431549072266, y = -1017.71984863281 },
+  wignadon = {
+    desc = "Castle Ruins of West Ignadon",
+    x = 771.491760253906,
+    z = 603.788915909827,
+    y = -544.690979003906
+  },
+  cath = { desc = "Cathedral", x = 1468.61584472656, z = 527.784204103053, y = 193.80827331543 },
+  cwedan = { desc = "Company premises: West Edan", x = -2316.39013671875, z = 240.147186279297, y = -2414.90551757813 },
+  cvolcano = { desc = "Company premises: Volcano", x = 520.2958984375, z = 525.170288048685, y = -115.866539001465 },
+  cnabessa = { desc = "Company premises: North Abessa", x = -627.488342285156, z = 560.823549598455, y = 115.144195556641 },
+  cedan = {
+    desc = "Converter in Edan",
+    x = -1631.78491210938,
+    z = 284.390289306641,
+    y = -1827.85375976563
+  },
+  cexacor = {
+    desc = "Converter in East Xacor",
+    x = -1254.27087402344,
+    z = 585.260897606611,
+    y = 621.79736328125
+  },
+  cignadon = {
+    desc = "Converter in Ignadon",
+    x = -58.3029441833496,
+    z = 540.149145416915,
+    y = 498.842529296875
+  },
+  cnabessa = {
+    desc = "Converter in North Abessa",
+    x = -1338.68701171875,
+    z = 469.525909423828,
+    y = -306.592315673828
+  },
+  csabess = { desc = "Converter in South Abessa", x = -848.668090820313, z = 461.785949707031, y = -606.985778808594 },
+  ctavar = {
+    desc = "Converter in Tavar",
+    x = -313.690704345703,
+    z = 285.918095543981,
+    y = -1691.76208496094
+  },
+  cwxacor = {
+    desc = "Converter in West Xacor",
+    x = -1421.27124023438,
+    z = 552.695398405194,
+    y = 223.260040283203
+  },
+  crater = { desc = "Crater", x = 952.348876953125, z = 491.245025634766, y = -296.495239257813 },
+  dam = { desc = "Dam", x = -539.780151367188, z = 500.367492675781, y = -358.572113037109 },
+  doomedcity = { desc = "Doomed City", x = -1799.00744628906, z = 421.132751464844, y = -839.695373535156 },
+  dbunker = { desc = "Duke's Bunker", x = 483.194122314453, z = 336.215850830078, y = -2158.3916015625 },
+  fort = {
+    desc = "Fort",
+    x = 399.338775634766,
+    z = 315.678070068359,
+    y = -1959.59240722656
+  },
+  goliet = {
+    desc = "Goliet",
+    x = -1336.0859375,
+    z = 340.013122558594,
+    y = -2179.56225585938
+  },
+  glift = { desc = "Great Lift", x = -1734.20166015625, z = 281.238354161382, y = -2358.5009765625 },
+  hanger = { desc = "Hangar", x = 846.531494140625, z = 548.829955950379, y = 525.584228515625 },
+  hort = {
+    desc = "Hort",
+    x = 1167.82592773438,
+    z = 515.055694460869,
+    y = 284.927520751953
+  },
+  hotel = {
+    desc = "Hotel Ruins of Goliet",
+    x = -1140.1396484375,
+    z = 416.595056422055,
+    y = -2382.28051757813
+  },
+  llake = { desc = "Lava Lake", x = 1120.10030429687, z = 470.414779654704, y = -854.895128178254 },
+  mlake = { desc = "Mountain Lake", x = -586.543395996094, z = 411.651092529297, y = -2157.38916015625 },
+  ofact = { desc = "Old Factory", x = -171.138626098633, z = 188.511535644531, y = -2467.21240234375 },
+  owind = { desc = "Old Windfarm", x = 106.422836303711, z = 283.599426269531, y = -2278.3447265625 },
+  river = {
+    desc = "River Delta",
+    x = -1313.98620605469,
+    z = 281.898101806641,
+    y = -2705.5908203125
+  },
+  ruins = { desc = "Ruins of the Dome", x = 295.502502441406, z = 291.153167724609, y = -1549.42248535156 },
+  spines = { desc = "Sandy Pines", x = -950.906311035156, z = 312.155517578125, y = -1690.46057128906 },
+  camp = {
+    desc = "Small Camp",
+    x = -1564.40319824219,
+    z = 285.416802883148,
+    y = -2066.95434570313
+  },
+  sfarm = { desc = "Small Farm", x = -2005.09655761719, z = 376.057464599609, y = -1029.14270019531 },
+  scliff = { desc = "Southern Cliffs", x = 469.287139892578, z = 283.82373046875, y = -2436.73486328125 },
+  spass = {
+    desc = "Southern Pass",
+    x = -1228.64709472656,
+    z = 554.384863190353,
+    y = 138.537307739258
+  },
+  tmount = { desc = "Tavar Mountains", x = -587.220947265625, z = 391.656341552734, y = -1202.1083984375 },
+  vdamned = { desc = "Valley of the Damned", x = -2061.59594726563, z = 189.49787902832, y = -2531.57250976563 },
+}
+
+local running = false;
+local function Run()
+  if running then
+    return
+  end
+  running = true
+  -- Refresh code here
+  local freezehp = getFlag("Freeze Health")
+  local freezeenergy = getFlag("Freeze Energy")
+  local freezestamina = getFlag("Freeze Stamina")
+  local freezejp = getFlag("Freeze Jet Pack")
+  local freezesm = getFlag("Freeze Special Meter")
+  local mainscan = getScan("main")
+  local jscan = getScan("jetpack")
+  if jscan ~= nil then
+    local jaddr = followAddress(jscan[1], { { offset=0x3, rc=true }, 0x0 })
+    if jaddr ~= nil then
+      updatePath("", "Jet Pack", "vtSingle", hex(jaddr + 0x1E0), {})
+      updatePath("", "Max Jet Pack", "vtSingle", hex(jaddr + 0x1E4), {})
+      if freezejp then
+        writeInteger(jaddr + 0x1E0, readInteger(jaddr + 0x1E4))
+      end
+    end
+  end
+  if mainscan ~= nil then
+    local raddr = followAddress(mainscan[1], { { offset=0x3, rc=true }, 0x60, 0x0, 0x30 })
+    if raddr ~= nil then
+      local off = readBytes(raddr + 0x67 + 1)
+      local maddr = followAddress(mainscan[1], { { offset=0x3, rc=true }, 0x60, 0x0, 0x38, off * 8, 0x218, 0x0, 0x8 })
+      if maddr ~= nil then
+        local poimr = updatePath("Position", "Places of Interest", "vtCustom", 0, {})
+        if poimr.Active then
+          local fm = createForm(false);
+          local cb = createComboBox(fm)
+          fm.Caption = "Select Location"
+          cb.ReadOnly = true
+          cb.Width = 300
+          fm.Height = cb.Height + 1
+          fm.Width = cb.Width + 3
+          cb.OnSelect = function()
+            fm.ModalResult = 1
+          end
+
+          local k,v
+          local list = {}
+          for k,v in pairs(poi) do
+            table.insert(list, k)
+          end
+          table.sort(list, function(a, b)
+            return poi[a]['desc'] &lt; poi[b]['desc']
+          end)
+          for k,v in ipairs(list) do
+            cb.Items.Add(poi[v]['desc'])
+          end
+
+          fm.showModal()
+          local keyv
+          if cb.ItemIndex &gt;= 0 then
+            keyv = list[cb.ItemIndex+1]
+          end
+          cb:Destroy()
+          fm:Destroy()
+
+          if keyv ~= nil then
+            writeDouble(maddr + 0x1D0, poi[keyv]["x"])
+            writeDouble(maddr + 0x1D8, poi[keyv]["z"])
+            writeDouble(maddr + 0x1E0, poi[keyv]["y"])
+          end
+          poimr.Active = false
+        end
+        updatePath("Position", "X", "vtDouble", hex(maddr + 0x1D0), {})
+        updatePath("Position", "Z", "vtDouble", hex(maddr + 0x1D8), {})
+        updatePath("Position", "Y", "vtDouble", hex(maddr + 0x1E0), {})
+      end
+
+      local off = readBytes(raddr + 0x4D + 1)
+      local maddr = followAddress(mainscan[1], { { offset=0x3, rc=true }, 0x60, 0x0, 0x38, off * 8 })
+      if maddr ~= nil then
+        updatePath("", "Strength", "vtDword", hex(maddr + 0x1*4 + 0x20), {})
+        updatePath("", "Constitution", "vtDword", hex(maddr + 0x2*4 + 0x20), {})
+        updatePath("", "Dexterity", "vtDword", hex(maddr + 0x3*4 + 0x20), {})
+        updatePath("", "Intelligence", "vtDword", hex(maddr + 0x4*4 + 0x20), {})
+        updatePath("", "Cunning", "vtDword", hex(maddr + 0x5*4 + 0x20), {})
+        updatePath("", "XP", "vtDword", hex(maddr + 0x6*4 + 0x20), {})
+        updatePath("", "Cold", "vtDword", hex(maddr + 0x7*4 + 0x20), {})
+        updatePath("", "Learning Points", "vtDword", hex(maddr + 0x8*4 + 0x20), {})
+        updatePath("", "Attribute Points", "vtDword", hex(maddr + 0x9*4 + 0x20), {})
+
+        updatePath("Abilities", "Melee Weapons", "vtDword", hex(maddr + 0x21*4 + 0x20), {})
+        updatePath("Abilities", "Ranged Weapons", "vtDword", hex(maddr + 0x22*4 + 0x20), {})
+        updatePath("Abilities", "Heavy Weapons", "vtDword", hex(maddr + 0x23*4 + 0x20), {})
+        updatePath("Abilities", "Attack Strength", "vtDword", hex(maddr + 0x24*4 + 0x20), {})
+        updatePath("Abilities", "Parry Strength", "vtDword", hex(maddr + 0x25*4 + 0x20), {})
+        updatePath("Abilities", "Heavy Punch", "vtDword", hex(maddr + 0x26*4 + 0x20), {})
+        updatePath("Abilities", "Grenades", "vtDword", hex(maddr + 0x27*4 + 0x20), {})
+        updatePath("Abilities", "Jet Pack Attack", "vtDword", hex(maddr + 0x28*4 + 0x20), {})
+        updatePath("Abilities", "Mutant Killer", "vtDword", hex(maddr + 0x29*4 + 0x20), {})
+        updatePath("Abilities", "Machine Killer", "vtDword", hex(maddr + 0x2A*4 + 0x20), {})
+        updatePath("Abilities", "Radiation Resistance", "vtDword", hex(maddr + 0x2B*4 + 0x20), {})
+        updatePath("Abilities", "Fire Resistance", "vtDword", hex(maddr + 0x2C*4 + 0x20), {})
+        updatePath("Abilities", "Frost Resistance", "vtDword", hex(maddr + 0x2D*4 + 0x20), {})
+        updatePath("Abilities", "Poison Resistance", "vtDword", hex(maddr + 0x2E*4 + 0x20), {})
+        updatePath("Abilities", "Armor", "vtDword", hex(maddr + 0x2F*4 + 0x20), {})
+        updatePath("Abilities", "Animal Trophies", "vtDword", hex(maddr + 0x30*4 + 0x20), {})
+        updatePath("Abilities", "Good Eater", "vtDword", hex(maddr + 0x31*4 + 0x20), {})
+        updatePath("Abilities", "Adventurer", "vtDword", hex(maddr + 0x32*4 + 0x20), {})
+        updatePath("Abilities", "Sixth Sense", "vtDword", hex(maddr + 0x33*4 + 0x20), {})
+        updatePath("Abilities", "Extra Hitpoints", "vtDword", hex(maddr + 0x34*4 + 0x20), {})
+        updatePath("Abilities", "Stamina", "vtDword", hex(maddr + 0x35*4 + 0x20), {})
+        updatePath("Abilities", "Lock Picking", "vtDword", hex(maddr + 0x36*4 + 0x20), {})
+        updatePath("Abilities", "Locksmith", "vtDword", hex(maddr + 0x37*4 + 0x20), {})
+        updatePath("Abilities", "Pickpocket", "vtDword", hex(maddr + 0x38*4 + 0x20), {})
+        updatePath("Abilities", "You Only Steal Twice", "vtDword", hex(maddr + 0x39*4 + 0x20), {})
+        updatePath("Abilities", "Modify Weapons", "vtDword", hex(maddr + 0x3A*4 + 0x20), {})
+        updatePath("Abilities", "Goldsmith", "vtDword", hex(maddr + 0x3B*4 + 0x20), {})
+        updatePath("Abilities", "Gemstone Socket", "vtDword", hex(maddr + 0x3C*4 + 0x20), {})
+        updatePath("Abilities", "Chemistry", "vtDword", hex(maddr + 0x3D*4 + 0x20), {})
+        updatePath("Abilities", "Hack", "vtDword", hex(maddr + 0x3E*4 + 0x20), {})
+        updatePath("Abilities", "Professional Hacker", "vtDword", hex(maddr + 0x3F*4 + 0x20), {})
+        updatePath("Abilities", "Hold Your Horses", "vtDword", hex(maddr + 0x40*4 + 0x20), {})
+        updatePath("Abilities", "Mining", "vtDword", hex(maddr + 0x41*4 + 0x20), {})
+        updatePath("Abilities", "Attribute Points", "vtDword", hex(maddr + 0x42*4 + 0x20), {})
+        updatePath("Abilities", "Experienced Hunter", "vtDword", hex(maddr + 0x43*4 + 0x20), {})
+        updatePath("Abilities", "Bookworm", "vtDword", hex(maddr + 0x44*4 + 0x20), {})
+        updatePath("Abilities", "Practioner", "vtDword", hex(maddr + 0x45*4 + 0x20), {})
+        updatePath("Abilities", "Haggler", "vtDword", hex(maddr + 0x46*4 + 0x20), {})
+        updatePath("Abilities", "Combat Skills", "vtDword", hex(maddr + 0x47*4 + 0x20), {})
+        updatePath("Abilities", "Survival Skills", "vtDword", hex(maddr + 0x48*4 + 0x20), {})
+        updatePath("Abilities", "Crafting Skills", "vtDword", hex(maddr + 0x49*4 + 0x20), {})
+        updatePath("Abilities", "Personality Skills", "vtDword", hex(maddr + 0x4A*4 + 0x20), {})
+        updatePath("Abilities", "Group", "vtDword", hex(maddr + 0x4B*4 + 0x20), {})
+        updatePath("Abilities", "Advocate", "vtDword", hex(maddr + 0x4C*4 + 0x20), {})
+        updatePath("Abilities", "Friend of Beasts", "vtDword", hex(maddr + 0x4D*4 + 0x20), {})
+        updatePath("Abilities", "Attribute", "vtDword", hex(maddr + 0x4E*4 + 0x20), {})
+        updatePath("Abilities", "Emotional", "vtDword", hex(maddr + 0x4F*4 + 0x20), {})
+        updatePath("Abilities", "Balanced", "vtDword", hex(maddr + 0x50*4 + 0x20), {})
+        updatePath("Abilities", "Synthetic", "vtDword", hex(maddr + 0x51*4 + 0x20), {})
+        updatePath("Abilities", "Berserker", "vtDword", hex(maddr + 0x52*4 + 0x20), {})
+        updatePath("Abilities", "Magic", "vtDword", hex(maddr + 0x53*4 + 0x20), {})
+        updatePath("Abilities", "Mana", "vtDword", hex(maddr + 0x54*4 + 0x20), {})
+        updatePath("Abilities", "Enchant Weapon", "vtDword", hex(maddr + 0x55*4 + 0x20), {})
+        updatePath("Abilities", "Scatter Shot", "vtDword", hex(maddr + 0x56*4 + 0x20), {})
+        updatePath("Abilities", "Seeker Shot", "vtDword", hex(maddr + 0x57*4 + 0x20), {})
+        updatePath("Abilities", "Camouflage Spell", "vtDword", hex(maddr + 0x58*4 + 0x20), {})
+        updatePath("Abilities", "Leather Skin Spell", "vtDword", hex(maddr + 0x59*4 + 0x20), {})
+        updatePath("Abilities", "Aspect of the Warrior Spell", "vtDword", hex(maddr + 0x5A*4 + 0x20), {})
+        updatePath("Abilities", "Blood Transfer Spell", "vtDword", hex(maddr + 0x5B*4 + 0x20), {})
+        updatePath("Abilities", "Spirit Wolf Spell", "vtDword", hex(maddr + 0x5C*4 + 0x20), {})
+        updatePath("Abilities", "Sense Life Spell", "vtDword", hex(maddr + 0x5D*4 + 0x20), {})
+        updatePath("Abilities", "Poisonous Aura Spell", "vtDword", hex(maddr + 0x5E*4 + 0x20), {})
+        updatePath("Abilities", "Healing Spell", "vtDword", hex(maddr + 0x5F*4 + 0x20), {})
+
+        updatePath("Abilities", "Clerics", "vtDword", hex(maddr + 0x60*4 + 0x20), {})
+        updatePath("Abilities", "PSI", "vtDword", hex(maddr + 0x61*4 + 0x20), {})
+        updatePath("Abilities", "Battery", "vtDword", hex(maddr + 0x62*4 + 0x20), {})
+        updatePath("Abilities", "High-Tech Weaponsmith", "vtDword", hex(maddr + 0x63*4 + 0x20), {})
+        updatePath("Abilities", "One Man Army", "vtDword", hex(maddr + 0x64*4 + 0x20), {})
+        updatePath("Abilities", "Suggestion", "vtDword", hex(maddr + 0x65*4 + 0x20), {})
+        updatePath("Abilities", "Technophile", "vtDword", hex(maddr + 0x66*4 + 0x20), {})
+        updatePath("Abilities", "Cleansing Ability", "vtDword", hex(maddr + 0x67*4 + 0x20), {})
+        updatePath("Abilities", "Power Shield", "vtDword", hex(maddr + 0x68*4 + 0x20), {})
+        updatePath("Abilities", "One with the Weapon Ability", "vtDword", hex(maddr + 0x69*4 + 0x20), {})
+        updatePath("Abilities", "Phasing Ability", "vtDword", hex(maddr + 0x6A*4 + 0x20), {})
+        updatePath("Abilities", "Power Wave Ability", "vtDword", hex(maddr + 0x6B*4 + 0x20), {})
+        updatePath("Abilities", "The Last Stand Ability", "vtDword", hex(maddr + 0x6C*4 + 0x20), {})
+        updatePath("Abilities", "Perception Ability", "vtDword", hex(maddr + 0x6D*4 + 0x20), {})
+
+        updatePath("Abilities", "Outlaw", "vtDword", hex(maddr + 0x6E*4 + 0x20), {})
+        updatePath("Abilities", "Unscrew", "vtDword", hex(maddr + 0x6F*4 + 0x20), {})
+        updatePath("Abilities", "Create Ammunition", "vtDword", hex(maddr + 0x70*4 + 0x20), {})
+        updatePath("Abilities", "Body Chemistry", "vtDword", hex(maddr + 0x71*4 + 0x20), {})
+        updatePath("Abilities", "Low-Tech Weaponsmith", "vtDword", hex(maddr + 0x72*4 + 0x20), {})
+        updatePath("Abilities", "Chem Capacity", "vtDword", hex(maddr + 0x73*4 + 0x20), {})
+        updatePath("Abilities", "Overdrive Stim", "vtDword", hex(maddr + 0x74*4 + 0x20), {})
+        updatePath("Abilities", "Steel Skim Chem", "vtDword", hex(maddr + 0x75*4 + 0x20), {})
+        updatePath("Abilities", "Pick-me-up Stim", "vtDword", hex(maddr + 0x76*4 + 0x20), {})
+        updatePath("Abilities", "Scrap Scanner Chem", "vtDword", hex(maddr + 0x77*4 + 0x20), {})
+        updatePath("Abilities", "Immune Booster Chem", "vtDword", hex(maddr + 0x78*4 + 0x20), {})
+        updatePath("Abilities", "Tough Guy Chem", "vtDword", hex(maddr + 0x79*4 + 0x20), {})
+        updatePath("Abilities", "Mind Charger Stim", "vtDword", hex(maddr + 0x7A*4 + 0x20), {})
+        updatePath("Abilities", "Animal Lover Chem", "vtDword", hex(maddr + 0x7B*4 + 0x20), {})
+
+        updatePath("", "Charisma", "vtDword", hex(maddr + 0x81 * 4 + 0x20), {})
+
+        updatePath("", "Max Health", "vtWord", hex(maddr + 0x85*4 + 0x20), {})
+        updatePath("", "Health", "vtWord", hex(maddr + 0x86*4 + 0x20), {})
+        updatePath("", "Max Energy", "vtDword", hex(maddr + 0x87*4 + 0x20), {})
+        updatePath("", "Energy", "vtDword", hex(maddr + 0x88*4 + 0x20), {})
+        updatePath("", "Max Stamina", "vtDword", hex(maddr + 0x89*4 + 0x20), {})
+        updatePath("", "Level", "vtDword", hex(maddr + 0x8A*4 + 0x20), {})
+        if freezehp then
+          writeInteger(maddr + 0x86*4 + 0x20, readInteger(maddr + 0x85*4 + 0x20))
+        end
+        if freezeenergy then
+          writeInteger(maddr + 0x88*4 + 0x20, readInteger(maddr + 0x87*4 + 0x20))
+        end
+      end
+      local off = readBytes(raddr + 0x57 + 1)
+      local faddr = followAddress(mainscan[1], { { offset=0x3, rc=true }, 0x60, 0x0, 0x38, off * 8 })
+      if faddr ~= nil then
+        local saddr = followAddress(faddr, { 0x98 })
+        if saddr ~= nil then
+          updatePath("", "Stamina", "vtSingle", hex(saddr + 0x288), {})
+          updatePath("", "Special Meter", "vtSingle", hex(saddr + 0x2D0), {})
+          if freezestamina then
+            writeFloat(saddr + 0x288, readInteger(maddr + 0x89*4 + 0x20))
+          end
+          if freezesm then
+            writeFloat(saddr + 0x2D0, 100)
+          end
+        end
+      end
+      local off = readBytes(raddr + 0x18 + 1)
+      local faddr = followAddress(mainscan[1], { { offset=0x3, rc=true }, 0x60, 0x0, 0x38, off * 8 })
+      if faddr ~= nil then
+        local statcnt = readInteger(faddr+ 0x138)
+        local statsaddr = followAddress(faddr, { 0x130 })
+        local i
+        for i=0,statcnt-1 do
+          local stataddr = statsaddr + 0x78 * i
+          local pos = readInteger(stataddr + 0x5C)
+          local off = readInteger(stataddr + 0x68)
+          local type = readInteger(stataddr + 0x4)
+          if type == 0x29 or type==0x2A or type == 0x2B or type == 0x2C then -- Fire(Lava)/Cold(Freeze)/Poison/Radiation
+            if freezehp then
+              local health = bAnd(readInteger(maddr + 0x85*4 + 0x20), 0xFFFF)
+              local value = bAnd(readInteger(stataddr + 0x70), 0xFFFF0000)
+              value = value + health
+              writeInteger(stataddr + 0x70, value)
+            end
+          end
+        end
+      end
+    end
+  end
+  running = false
+  collectgarbage()
+  collectgarbage()
+end
+
+if memrec ~= nil then
+  local t = getTimer()
+  t.OnTimer = Run
+  Run()
+  t.Interval = 80
+  t.Enabled = true -- Enable timer ONLY after first run in case of error
+end
+
+[DISABLE]
+if memrec ~= nil then
+  killTimer()
+  while memrec.Count &gt; 0 do
+    memrec.Child[0]:Delete()
+  end
+end
+cached = {}
+collectgarbage()
+collectgarbage()
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>10</ID>
+      <Description>"Inventory"</Description>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{$lua}
+
+local function hex(a, c)
+  if a == nil then
+    return "(nil)"
+  end
+  local fmt = "%X"
+  if type(c) == "number" then
+    fmt = "%0"..c.."X"
+  end
+  return string.format(fmt, a)
+end
+
+local function pointerSize()
+  if targetIs64Bit() then
+    return 8
+  end
+  return 4
+end
+
+local function readSignedInteger(a)
+  local v = readInteger(a)
+  if v ~= nil then
+    if v &gt; 0x7FFFFFFF then
+      v = -(0x100000000 - v)
+    end
+  end
+  return v
+end
+
+local function findRecord(parent, desc)
+  if parent == nil and memrec ~= nil then
+    parent = memrec
+  end
+  local found
+  if parent ~= nil and parent.Count &gt; 0 then
+    local i
+    for i = 0, parent.Count-1 do
+      if parent.Child[i].Description == desc then
+        found = parent.Child[i]
+      end
+    end
+  end
+  return found
+end
+
+local function updateRecord(parent, desc, type, addr, offsets)
+  if parent == nil and memrec ~= nil then
+    parent = memrec
+  end
+  local rec = findRecord(parent,desc)
+  if rec == nil then
+    rec = getAddressList().createMemoryRecord()
+    rec.Description = desc
+    rec.VarType = type
+    if addr ~= nil then
+      rec.setAddress(addr, offsets)
+    end
+    if parent ~= nil then
+      rec.appendToEntry(parent)
+    end
+  else
+    local a = rec.Address
+    if addr ~= a then
+      rec.setAddress(addr, offsets)
+    end
+  end
+  return rec
+end
+
+local cached = {}
+
+local function updatePath(path, desc, type, addr, offsets)
+  if memrec == nil then
+    return nil
+  end
+  local fullpath = ""
+  if path ~= nil and path ~= "" then
+    fullpath = path.."\\"..desc
+  else
+    fullpath = desc
+  end
+  local rec
+  if cached[fullpath] == nil or cached[fullpath].Parent == nil then
+    local i
+    local arr = {}
+    local parent
+    for i in string.gmatch(path, "[^\\]+") do
+      table.insert(arr, i)
+    end
+    if #arr &gt; 0 then
+      local item = table.remove(arr)
+      parent = updatePath(table.concat(arr, '\\'), item, "vtCustom", 0, {})
+    else
+      parent = memrec
+    end
+    rec = getAddressList().createMemoryRecord()
+    rec.Description = desc
+    rec.VarType = type
+    rec.setAddress(addr, offsets)
+    rec.appendToEntry(parent)
+    if type == "vtCustom" then
+      rec.IsGroupHeader = true
+    end
+    cached[fullpath] = rec
+  else
+    rec = cached[fullpath]
+    local a = rec.Address
+    if addr ~= a then
+      rec.setAddress(addr, offsets)
+    end
+  end
+  return cached[fullpath]
+end
+
+local function removePath(path)
+  if cached[path] ~= nil then
+    if cached[path].getAddress() ~= "" then
+      cached[path]:Delete()
+    end
+    cached[path] = nil
+  end
+end
+
+local function cleanupPath(path, list)
+  local pathlist = {}
+  local i,v
+  for i,v in pairs(list) do
+    table.insert(pathlist, path.."\\"..i)
+  end
+  for i,v in pairs(cached) do
+    if string.sub(i,1,string.len(path)+1) == path.."\\" then
+      local r,z
+      local found = false
+      for r,z in ipairs(pathlist) do
+        if i == z or string.sub(i,1,string.len(z)+1) == z.."\\" then
+          found = true
+          break
+        end
+      end
+      if not found then
+        removePath(i)
+      end
+    end
+  end
+end
+
+local function getHeader(parent, desc)
+  if parent == nil and memrec ~= nil then
+    parent = memrec
+  end
+  local rec = findRecord(parent,desc)
+  if rec == nil then
+    rec = getAddressList().createMemoryRecord()
+    rec.Description = desc
+    rec.IsGroupHeader = true
+    if parent ~= nil then
+      rec.appendToEntry(parent)
+    end
+  end
+  return rec
+end
+
+local function getFlag(desc)
+  local result = false
+  if memrec ~= nil then
+    local rec = findRecord(memrec, desc)
+    if rec == nil then
+      rec = getAddressList().createMemoryRecord()
+      rec.Description = desc
+      rec.IsGroupHeader = true
+      rec.appendToEntry(memrec)
+    end
+    result = rec.Active
+  end
+  return result
+end
+
+local function getCodeOffset(addr, off)
+  if addr == nil or addr == 0 then
+    return nil
+  end
+  local o = readSignedInteger(addr + off)
+  if o ~= nil then
+    return addr + o + off + 4
+  end
+  return nil
+end
+
+local function followAddress(addr, offs, debug)
+  local i
+  for i = 1,#offs do
+    if addr ~= nil then
+      local ot = type(offs[i])
+      if ot == "table" then
+        if type(offs[i]["offset"]) ~= "number" then
+          return nil
+        end
+        if offs[i]["rc"] == true then
+          addr = getCodeOffset(addr, offs[i]["offset"])
+        elseif offs[i]["r32"] == true then
+          addr = readInteger(addr + offs[i]["offset"])
+        else
+          addr = readPointer(addr + offs[i]["offset"])
+        end
+      elseif ot == "number" then
+        addr = readPointer(addr + offs[i])
+      else
+        return nil
+      end
+      if debug then
+        print("  "..hex(addr))
+      end
+    end
+  end
+  return addr
+end
+
+if timers == nil then
+  timers = {}
+end
+if aobscans == nil then
+  aobscans = {}
+end
+
+local function getTimer()
+  if memrec ~= nil then
+    local id = memrec.id
+    if timers[id] == nil then
+      timers[id] = createTimer()
+      timers[id].Enabled = false
+      timers[id].Interval = getFreezeTimer().Interval
+    end
+    return timers[id]
+  end
+  return nil
+end
+
+local function killTimer()
+  if memrec ~= nil then
+    local id = memrec.id
+    if timers[id] ~= nil then
+      timers[id]:Destroy()
+      timers[id] = nil
+    end
+  end
+end
+
+local function setScan(name, opts)
+  if memrec == nil then
+    return false
+  end
+  if aobscans[memrec.id] ~= nil then
+    aobscans[memrec.id][name] = nil
+  end
+  if opts["bytes"] == nil then
+    return false
+  end
+  local perm = opts["perm"]
+  if perm == nil then
+    perm = "-C-W+X" -- Not CopyOnWrite, Not Writable, but executable by default
+  end
+  local startaddress = 0
+  local endaddress = 0x7FFFFFFFFFFFFFFF
+  if opts["module"] ~= nil then
+    startaddress = getAddress(opts["module"])
+    endaddress = startaddress + getModuleSize(opts["module"])
+  end
+  local bytes = opts["bytes"]
+  local ms = createMemScan()
+  local success = false
+  if aobscans[memrec.id] == nil then
+    aobscans[memrec.id] = {}
+  end
+  if ms ~= nil then
+    ms.firstScan(soExactValue, vtByteArray, 0, bytes, "", startaddress, endaddress, perm, fsmNotAligned, "1", true, false, false, false)
+    ms.waitTillDone()
+    local fl = createFoundList(ms)
+    if fl ~= nil then
+      fl.initialize()
+      if fl.Count &gt; 0 then
+        aobscans[memrec.id][name] = {}
+        local i
+        for i=0,fl.Count-1 do
+          table.insert(aobscans[memrec.id][name], tonumber("0x"..fl.Address[i]))
+        end
+      end
+      fl:Destroy()
+    end
+    ms:Destroy()
+    if success then
+      return true
+    end
+  end
+  return false
+end
+
+local function setScans(list, perm)
+  local k,v
+  for k,v in pairs(list) do
+    setScan(k, v, perm)
+  end
+end
+
+local function getScan(name)
+  if memrec ~= nil then
+    local id = memrec.id
+    if aobscans[id] ~= nil then
+      if aobscans[id][name] ~= nil then
+        return aobscans[id][name]
+      end
+    end
+  end
+  return nil
+end
+
+local function forEach(startaddress, toaddress, itemsize, func)
+  if startaddress &lt; toaddress then
+    local addr = startaddress
+    while addr &lt; toaddress do
+      local r = func(addr)
+      if r == false then
+        break
+      end
+      addr = addr + itemsize
+    end
+  end
+end
+
+if syntaxcheck then
+  return
+end
+
+[ENABLE]
+
+-- For Debugging
+--[[
+local le = getLuaEngine()
+le.mOutput.Lines:Clear()
+le.cbShowOnPrint.Checked = false
+le:Show()
+]]--
+
+-- AOBScans here
+
+setScans({
+  main = {
+    bytes = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 49 8B 06",
+    module = "ELEX.exe"
+  },
+  lookup = {
+    bytes = "48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 8B 10 EB 07 48 8D 15 ?? ?? ?? ?? 48 8B 03",
+    module = "ELEX.exe"
+  },
+})
+
+local damageoffset = {
+  [0x01] = 0x188,
+  [0x02] = 0x188,
+  [0x03] = 0x188,
+  [0x12] = 0x198
+}
+
+local stattoname = {
+  [0x01] = "Strength",
+  [0x02] = "Constitution",
+  [0x03] = "Dexterity",
+  [0x04] = "Intelligence",
+  [0x05] = "Cunning",
+  [0x06] = "Experience",
+  [0x07] = "Cold",
+  [0x08] = "Skill Points",
+  [0x09] = "Attribute Points",
+  [0x0A] = "Melee Weapons",
+  [0x0B] = "Ranged Weapons",
+  [0x0C] = "Heavy Weapons",
+  [0x0D] = "Grenades",
+  [0x0E] = "Attack Strength",
+  [0x0F] = "Perry Strength",
+  [0x10] = "Heavy Punch",
+  [0x11] = "Radiation Resistance",
+  [0x12] = "Fire Resistance",
+  [0x13] = "Frost Resistance",
+  [0x14] = "Poison Resistance",
+  [0x15] = "Armor",
+  [0x16] = "Bonus Damage",
+  [0x17] = "Bonus Damage Companions",
+  [0x18] = "Bonus Health",
+  [0x19] = "Bonus Companion Health",
+  [0x1A] = "Bonus Health per Hit",
+  [0x1B] = "Penalty Enemy Resistance",
+  [0x1C] = "Bonus Resistance",
+  [0x1D] = "Bonus Heavy Punch",
+  [0x1E] = "Bonus Experience Monster",
+  [0x1F] = "Bonus Experience Quest",
+  [0x1F] = "Bonus Experience Quest",
+  [0x20] = "Experience Bonus",
+  [0x21] = "Melee Weapons",
+  [0x22] = "Ranged Weapons",
+  [0x23] = "Heavy Weapons",
+  [0x24] = "Attack Strength",
+  [0x25] = "Perry Strength",
+  [0x26] = "Heavy Punch",
+  [0x27] = "Grenades",
+  [0x28] = "Jet Pack Strength",
+  [0x29] = "Mutant Killer",
+  [0x2A] = "Machine Killer",
+  [0x2B] = "Radiation Risistance",
+  [0x2C] = "Fire Risistance",
+  [0x2D] = "Frost Risistance",
+  [0x2E] = "Poison Risistance",
+  [0x2F] = "Armor",
+  [0x30] = "Animal Trophies",
+  [0x31] = "Good Eater",
+  [0x32] = "Adventurer",
+  [0x33] = "Sixth Sense",
+  [0x34] = "Extra Hitpoints",
+  [0x35] = "Stamina",
+  [0x36] = "Lock Picking",
+  [0x37] = "Locksmith",
+  [0x38] = "Pickpocket",
+  [0x39] = "You Steal Only Twice",
+  [0x3A] = "Modify Weapons",
+  [0x3B] = "Goldsmith",
+  [0x3C] = "Gemstone Socket",
+  [0x3D] = "Chemistry",
+  [0x3E] = "Hack",
+  [0x3F] = "Professional Hacker",
+  [0x40] = "Hold Your Horses",
+  [0x41] = "Mining",
+  [0x42] = "Attribute Points",
+  [0x43] = "Experienced Hunter",
+  [0x44] = "Bookworm",
+  [0x45] = "Practitioner",
+  [0x46] = "Haggler",
+  [0x47] = "Combat Skills",
+  [0x48] = "Survival Skills",
+  [0x49] = "Crafting Skills",
+  [0x4A] = "Personality Skills",
+  [0x4B] = "Group",
+  [0x4C] = "Advocate",
+  [0x4D] = "Friend of Beasts",
+  [0x4E] = "Attribute",
+  [0x4F] = "Emotional",
+  [0x50] = "Balanced",
+  [0x51] = "Synthetic",
+  [0x52] = "Berserker",
+  [0x53] = "Magic",
+  [0x54] = "Mana",
+  [0x55] = "Enchant Weapon",
+  [0x56] = "Scatter Shot",
+  [0x57] = "Seeker Shot",
+  [0x58] = "Camouflage Spell",
+  [0x59] = "Leather Skin Spell",
+  [0x5A] = "Aspect of the Warrior Spell",
+  [0x5B] = "Blood Transfer Spell",
+  [0x5C] = "Spirit Wolf Spell",
+  [0x5D] = "Sense Life Spell",
+  [0x5E] = "Poisonous Aura Spell",
+  [0x5F] = "Healing Spell",
+  [0x60] = "Clerics",
+  [0x61] = "PSI",
+  [0x62] = "Battery",
+  [0x63] = "High-Tech Weaponsmith",
+  [0x64] = "One Man Army",
+  [0x65] = "Suggestion",
+  [0x66] = "Technophile",
+  [0x67] = "Cleansing Ability",
+  [0x68] = "Power Shield",
+  [0x69] = "One with the Weapon Ability",
+  [0x6A] = "Phasing Ability",
+  [0x6B] = "Power Wave Ability",
+  [0x6C] = "The Last Stand Ability",
+  [0x6D] = "Projection Ability",
+  [0x6E] = "Outlaw",
+  [0x6F] = "Unscrew",
+  [0x70] = "Create Ammunition",
+  [0x71] = "Body Chemistry",
+  [0x72] = "Low-Tech Weaponsmith",
+  [0x73] = "Chem Capacity",
+  [0x74] = "Overdrive Stim",
+  [0x75] = "Steel Skin Stim",
+  [0x76] = "Pick-me-up Stim",
+  [0x77] = "Scrap Scanner Chem",
+  [0x78] = "Immune Booster Chem",
+  [0x79] = "Tough Guy Chem",
+  [0x7A] = "Mind Changer Stim",
+  [0x7B] = "Animal Lover Chem",
+  [0x7C] = "Jet Pack",
+  [0x7D] = "Energy Regeneration",
+  [0x7E] = "Combat",
+  [0x7F] = "Survival",
+  [0x80] = "Crafting",
+  [0x81] = "Charisma",
+  [0x82] = "Berserker",
+  [0x83] = "Outlaw",
+  [0x84] = "Cleric",
+  [0x85] = "Max Health",
+  [0x86] = "Health",
+  [0x87] = "Maximum Mental Energy",
+  [0x88] = "Energy",
+  [0x89] = "Max Stamina",
+  [0x8A] = "Level",
+  [0x8B] = "Attack Power",
+  [0x8C] = "Parrying Power",
+  [0x8D] = "Armor",
+  [0x8E] = "Resistance to Fire",
+  [0x8F] = "Resistance to Frost",
+  [0x90] = "Resistance to Poison",
+  [0x91] = "Resistance to Radiation",
+  [0x92] = "Resistance to Lightning",
+  [0x93] = "Resistance to PSI",
+  [0x94] = "Resistance to Bleeding",
+  [0x95] = "Resistance to Explosion",
+  [0x96] = "Resistance to Reflection",
+  [0x97] = "Resistance to EMP",
+  [0x98] = "Resistance to Sting",
+}
+
+local function Run()
+  -- Refresh code here
+  local mainscan = getScan("main")
+  local lookupaddr
+  local lookupsize
+  local lscan = getScan("lookup")
+  if lscan ~= nil then
+    lookupaddr = followAddress(lscan[1], { { offset=0x3, rc=true }, 0x18 })
+  end
+  if mainscan ~= nil then
+    local raddr = followAddress(mainscan[1], { { offset=0x3, rc=true }, 0x60, 0x0, 0x30 })
+    if raddr ~= nil then
+      local off = readBytes(raddr + 0x19 + 1)
+      local maddr = followAddress(mainscan[1], { { offset=0x3, rc=true }, 0x60, 0x0, 0x38, off * 8 })
+      if maddr ~= nil then
+        local cnt = readInteger(maddr + 0x60)
+        local iaddr = followAddress(maddr, { 0x58 })
+        if iaddr ~= nil then
+          local i
+          for i=0,cnt-1 do
+            local itemaddr = iaddr + i * 0x48
+            local v = readInteger(itemaddr + 0x44)
+            local r = followAddress(itemaddr, { 0x8, 0x0 })
+            if r ~= nil then
+              local off = readInteger(r+0x20)
+              local straddr = followAddress(lookupaddr, { off * 0x18 })
+              if straddr ~= nil then
+                local str = readString(straddr, 200)
+                --print("-------------------------------------------")
+                --print(hex(itemaddr).." -- " ..str)
+                if string.sub(str,1,9) ~= "It_Recipe" then
+                  local imr = updatePath("Inventory", str, "vtDword", hex(itemaddr + 0x44), {})
+                  local daddr = followAddress(r, {0x30})
+                  if imr.Count == 0 and daddr ~= nil then
+                    local doff = readBytes(daddr + 0x20 + 1)
+                    local daddr = followAddress(r, {0x38, doff * 8})
+                    if daddr ~= nil then
+                      local type = readInteger(daddr + 0xE0)
+                      --print(hex(daddr).." -- " .. hex(type))
+                      updatePath("Inventory\\"..str, "Price", "vtDword", hex(daddr + 0x28), {})
+                      updatePath("Inventory\\"..str, "Type ID", "vtDword", hex(daddr + 0xE0), {})
+                      if damageoffset[type] ~= nil then
+                        updatePath("Inventory\\"..str, "Min Damage", "vtDword", hex(daddr + damageoffset[type]), {})
+                        updatePath("Inventory\\"..str, "Max Damage", "vtDword", hex(daddr + damageoffset[type] + 4), {})
+                      end
+                      local cnt = readInteger(daddr + 0xC8)
+                      local aaddr = followAddress(daddr, { 0xC0 })
+                      local i
+                      if cnt &gt; 0 and cnt&lt;20 then
+                        for i=0,cnt-1 do
+                          local a1addr = aaddr + 0x20 * i
+                          local sid = readInteger(a1addr + 0x8)
+                          if stattoname[sid] ~= nil then
+                            updatePath("Inventory\\"..str, stattoname[sid], "vtDword", hex(a1addr+0x10),{})
+                          else
+                            --print(hex(a1addr).." -- UNKNOWN.." ..hex(sid))
+                          end
+                        end
+                      end
+                    end
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  collectgarbage()
+  collectgarbage()
+end
+
+if memrec ~= nil then
+  local t = getTimer()
+  t.OnTimer = Run
+  Run()
+  t.Inteval = 20000
+  t.Enabled = true -- Enable timer ONLY after first run in case of error
+end
+
+[DISABLE]
+if memrec ~= nil then
+  killTimer()
+  while memrec.Count &gt; 0 do
+    memrec.Child[0]:Delete()
+  end
+end
+cached = {}
+collectgarbage()
+collectgarbage()
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>146</ID>
+      <Description>"No description"</Description>
+      <VariableType>4 Bytes</VariableType>
+      <Address>ELEX.exe+DE3970</Address>
+      <Offsets>
+        <Offset>F8</Offset>
+        <Offset>1*8+0x668</Offset>
+        <Offset>0*8</Offset>
+        <Offset>0x1E0+0x58</Offset>
+        <Offset>7*8</Offset>
+        <Offset>0x108+0x58</Offset>
+        <Offset>150</Offset>
+        <Offset>8</Offset>
+        <Offset>1A*8</Offset>
+      </Offsets>
+    </CheatEntry>
+  </CheatEntries>
+  <CheatCodes>
+  </CheatCodes>
+  <UserdefinedSymbols/>
+</CheatTable>

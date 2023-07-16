@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="28">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>20</ID>
+      <Description>"Active Cheat Table"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+{$lua}
+LaunchMonoDataCollector()
+{$asm}
+LuaCall(function cycleFullCompact(sender,force) local state = not(compactmenuitem.Caption == 'Compact View Mode'); if force~=nil then state = not force end; compactmenuitem.Caption = state and 'Compact View Mode' or 'Full View Mode'; getMainForm().Splitter1.Visible = state; getMainForm().Panel4.Visible    = state; getMainForm().Panel5.Visible    = state; end; function addCompactMenu() if compactmenualreadyexists then return end; local parent = getMainForm().Menu.Items; compactmenuitem = createMenuItem(parent); parent.add(compactmenuitem); compactmenuitem.Caption = 'Compact View Mode'; compactmenuitem.OnClick = cycleFullCompact; compactmenualreadyexists = 'yes'; end; addCompactMenu(); cycleFullCompact(nil,true))
+[DISABLE]
+
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>23</ID>
+          <Description>"No Damage"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+alloc(newmem,100)
+label(returnhere)
+label(originalcode)
+label(exit)
+
+newmem:
+cmp [esi+46],1 //isPlayer
+jne originalcode
+mov byte ptr [esi+4B],1  //0: No  1: Yes
+originalcode:
+movzx eax,byte ptr [esi+4B]  //&lt;noDamage&gt;k__BackingField
+test eax,eax
+
+exit:
+jmp returnhere
+
+Invector:vCharacter:ReduceHealth+a:
+jmp newmem
+nop
+returnhere:
+ 
+[DISABLE]
+dealloc(newmem)
+Invector:vCharacter:ReduceHealth+a:
+movzx eax,byte ptr [esi+4B]
+test eax,eax
+//Alt: db 0F B6 46 4B 85 C0
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>24</ID>
+          <Description>"Inf Health"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>// Health is a 'shared' 4 bytes value
+
+[ENABLE]
+alloc(newmem,100)
+label(returnhere)
+label(originalcode)
+
+newmem:
+cmp [esi+46],1
+jne originalcode
+mov eax,[esi+24]  //0024 - maxHealth { 5 }
+originalcode:
+mov [esi+28],eax  //0028 - currentHealth
+test eax,eax
+jmp returnhere
+
+Invector:vCharacter:ReduceHealth+18:
+jmp newmem
+returnhere:
+
+[DISABLE]
+dealloc(newmem)
+Invector:vCharacter:ReduceHealth+18:
+mov [esi+28],eax
+test eax,eax
+//Alt: db 89 46 28 85 C0
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>25</ID>
+          <Description>"Inf Stamina"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+alloc(newmem,100)
+label(returnhere)
+label(originalcode)
+
+newmem:
+cmp [esi+46],1
+jne originalcode
+fld [esi+34]  //0034 - maxStamina
+fstp [esi+38] //0038 - currentStamina
+originalcode:
+fld dword ptr [esi+38]
+fldz
+jmp returnhere
+
+Invector:vCharacter:ReduceStamina+2f:
+jmp newmem
+returnhere:
+
+[DISABLE]
+dealloc(newmem)
+Invector:vCharacter:ReduceStamina+2f:
+fld dword ptr [esi+38]
+fldz 
+//Alt: db D9 46 38 D9 EE
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>0</ID>
+          <Description>"Inf Lantern"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+Lantern:Consume:
+  ret
+ 
+[DISABLE]
+Lantern:Consume:
+  push ebp
+
+//004C - oilCapacity { 200 } - maxValue (float)
+//0050 - &lt;oil&gt;k__BackingField - currentValue (float)
+//0054 - consumeSpeed - 1,200000048 (defaultValue) (float)
+//0058 - refillSpeed - 40 (defaultValue) (float)
+
+//As you can see, there are many ways to get Inf Lantern.  ;)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>11</ID>
+          <Description>"Inf Shadow Mode"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+alloc(newmem,100)
+label(returnhere)
+label(originalcode)
+
+newmem:
+fld [eax+34]
+fstp [eax+38]
+originalcode:
+fld dword ptr [eax+38]
+fstp qword ptr [ebp-10]
+jmp returnhere
+
+BlackMedallion:UpdateBoostMode+29:
+jmp newmem
+nop
+returnhere:
+
+[DISABLE]
+dealloc(newmem)
+BlackMedallion:UpdateBoostMode+29:
+fld dword ptr [eax+38]
+fstp qword ptr [ebp-10]
+//Alt: db D9 40 38 DD 5D F0
+
+
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>19</ID>
+          <Description>"Max Accumulated Energy"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+VariantValue:set_IntValue+d+1:
+  db 4E
+//89 4E 14
+//mov [esi+14],ecx  //00000010 { 16 }
+ 
+[DISABLE]
+VariantValue:set_IntValue+d+1:
+  db 46
+//89 46 14
+//mov [esi+14],eax
+
+
+// The Accumulated Energy is a 4bytes value [min=0; max=10]
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>12</ID>
+          <Description>"Arianna's Unbreathless"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+alloc(newmem,100)
+label(returnhere)
+label(originalcode)
+label(exit)
+
+newmem:
+fld [edi+34]
+fstp [edi+38]
+originalcode:
+fld dword ptr [edi+38]
+fstp qword ptr [ebp-18]
+
+exit:
+jmp returnhere
+
+Arianna:UpdateBreathless+7b:
+jmp newmem
+nop
+returnhere:
+
+[DISABLE]
+dealloc(newmem)
+Arianna:UpdateBreathless+7b:
+fld dword ptr [edi+38]
+fstp qword ptr [ebp-18]
+//Alt: db D9 47 38 DD 5D E8
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>22</ID>
+          <Description>"Inf Black Medallion Heal"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+BlackMedallion:Heal+31:
+  db 40
+//inc eax
+ 
+[DISABLE]
+BlackMedallion:Heal+31:
+  db 48
+//dec eax
+
+{
+// ORIGINAL CODE - INJECTION POINT: BlackMedallion:Heal+31
+
+087B28E8: 8B C8                 -  mov ecx,eax
+087B28EA: 39 09                 -  cmp [ecx],ecx
+087B28EC: 8B 40 20              -  mov eax,[eax+20]
+087B28EF: 0F B6 40 14           -  movzx eax,byte ptr [eax+14]
+087B28F3: 85 C0                 -  test eax,eax
+087B28F5: 0F 84 49 00 00 00     -  je BlackMedallion:Heal+6c
+087B28FB: 8B 47 44              -  mov eax,[edi+44]
+087B28FE: 85 C0                 -  test eax,eax
+087B2900: 0F 8E 3E 00 00 00     -  jng BlackMedallion:Heal+6c
+087B2906: 8B 47 44              -  mov eax,[edi+44]
+// ---------- INJECTING HERE ----------
+087B2909: 48                    -  dec eax
+087B290A: 89 47 44              -  mov [edi+44],eax
+087B290D: 8B 47 20              -  mov eax,[edi+20]
+// ---------- DONE INJECTING  ----------
+087B2910: 8B 4F 30              -  mov ecx,[edi+30]
+087B2913: 83 EC 08              -  sub esp,08
+087B2916: 51                    -  push ecx
+087B2917: 50                    -  push eax
+087B2918: 39 00                 -  cmp [eax],eax
+087B291A: E8 39 96 02 00        -  call Invector:vCharacter:IncrementHealth
+087B291F: 83 C4 10              -  add esp,10
+087B2922: 8B 47 20              -  mov eax,[edi+20]
+087B2925: 83 EC 0C              -  sub esp,0C
+087B2928: 50                    -  push eax
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>27</ID>
+          <Description>"Fast Kill v1"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+alloc(newmem,100)
+label(returnhere)
+label(originalcode)
+label(exit)
+
+newmem:
+cmp [esi+46],0
+jne originalcode
+mov [esi+28],0
+originalcode:
+mov eax,[esi+28]
+sub eax,[ebp+0C]
+
+exit:
+jmp returnhere
+
+Invector:vCharacter:ReduceHealth+12:
+jmp newmem
+nop
+returnhere:
+ 
+[DISABLE]
+dealloc(newmem)
+Invector:vCharacter:ReduceHealth+12:
+mov eax,[esi+28]
+sub eax,[ebp+0C]
+//Alt: db 8B 46 28 2B 45 0C
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>26</ID>
+          <Description>"Fast Kill v2"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+alloc(newmem,100)
+label(returnhere)
+label(originalcode)
+
+newmem:
+cmp [eax+46],0
+jne originalcode
+mov byte ptr [eax+5C],1
+originalcode:
+movzx eax,byte ptr [eax+5C]
+mov esi,eax
+jmp returnhere
+
+Invector:vCharacter:IsDead+14:
+jmp newmem
+nop
+returnhere:
+
+[DISABLE]
+dealloc(newmem)
+Invector:vCharacter:IsDead+14:
+movzx eax,byte ptr [eax+5C]
+mov esi,eax
+//Alt: db 0F B6 40 5C 8B F0
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>30</ID>
+          <Description>"Inf Melee Weapon"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+vMeleeWeapon:ConsumeShot:
+  ret
+
+[DISABLE]
+vMeleeWeapon:ConsumeShot:
+  push ebp
+
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>32</ID>
+              <Description>"vMeleeWeapon"</Description>
+              <Options moHideChildren="1"/>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+alloc(newmem,2048)
+label(returnhere)
+label(originalcode)
+label(exit)
+
+globalalloc(damage_ptr,4)
+
+newmem:
+mov [damage_ptr],ebx
+mov [ebx+50],(float)100  //put the value your want or use the pointer address to edit that value
+originalcode:
+fld dword ptr [ebx+50]  //defaultDamageValue { 1 }
+fld dword ptr [esi+10]
+
+exit:
+jmp returnhere
+
+iMeleeManager:FillDamageInfo+1c:
+jmp newmem
+nop
+returnhere:
+ 
+[DISABLE]
+dealloc(newmem)
+iMeleeManager:FillDamageInfo+1c:
+fld dword ptr [ebx+50]
+fld dword ptr [esi+10]
+//Alt: db D9 43 50 D9 46 10
+</AssemblerScript>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>31</ID>
+                  <Description>"damage"</Description>
+                  <VariableType>Float</VariableType>
+                  <Address>[damage_ptr]+50</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>33</ID>
+                  <Description>"staminaCost"</Description>
+                  <VariableType>Float</VariableType>
+                  <Address>[damage_ptr]+54</Address>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols>
+    <SymbolEntry>
+      <Name>damage_ptr</Name>
+      <Address>06040000</Address>
+    </SymbolEntry>
+  </UserdefinedSymbols>
+</CheatTable>

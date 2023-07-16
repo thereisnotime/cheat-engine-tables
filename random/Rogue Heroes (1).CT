@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="34">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>37</ID>
+      <Description>"Rogue_Heroes_Ruins_of_Tasos_v1.57.160.0_Steam_by_MBRKiNG"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>000080</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>36</ID>
+          <Description>"Open Debug Menu (enable/disable)"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : Rogue Heroes.exe
+  Version: 
+  Date   : 2021-02-24
+  Author : FSB
+
+  This script does blah blah blah
+}
+
+define(address,RogueHeroMG.DebugHandler::Update+2F )
+define(bytes,80 79 48 00 74 12)
+
+[ENABLE]
+
+assert(address,bytes)
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+
+
+code:
+  mov byte ptr [ecx+48],01
+  cmp byte ptr [ecx+48],00
+  je RogueHeroMG.DebugHandler::Update+47
+  jmp return
+
+address:
+  jmp newmem
+  nop
+return:
+
+[DISABLE]
+
+address:
+  db bytes
+  // cmp byte ptr [ecx+48],00
+  // je RogueHeroMG.DebugHandler::Update+47
+
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: RogueHeroMG.DebugHandler::Update+2F
+
+RogueHeroMG.DebugHandler::Update+A: 80 BE 07 01 00 00 00  - cmp byte ptr [esi+00000107],00
+RogueHeroMG.DebugHandler::Update+11: 74 16                 - je RogueHeroMG.DebugHandler::Update+29
+RogueHeroMG.DebugHandler::Update+13: D9 C0                 - fld st(0)
+RogueHeroMG.DebugHandler::Update+15: 83 EC 04              - sub esp,04
+RogueHeroMG.DebugHandler::Update+18: D9 1C 24              - fstp dword ptr [esp]
+RogueHeroMG.DebugHandler::Update+1B: 8B CE                 - mov ecx,esi
+RogueHeroMG.DebugHandler::Update+1D: D9 5D F8              - fstp dword ptr [ebp-08]
+RogueHeroMG.DebugHandler::Update+20: FF 15 84 C9 2B 06     - call dword ptr [062BC984]
+RogueHeroMG.DebugHandler::Update+26: D9 45 F8              - fld dword ptr [ebp-08]
+RogueHeroMG.DebugHandler::Update+29: 8B 8E C4 00 00 00     - mov ecx,[esi+000000C4]
+// ---------- INJECTING HERE ----------
+RogueHeroMG.DebugHandler::Update+2F: 80 79 48 00           - cmp byte ptr [ecx+48],00
+// ---------- DONE INJECTING  ----------
+RogueHeroMG.DebugHandler::Update+33: 74 12                 - je RogueHeroMG.DebugHandler::Update+47
+RogueHeroMG.DebugHandler::Update+35: 8B 96 A0 00 00 00     - mov edx,[esi+000000A0]
+RogueHeroMG.DebugHandler::Update+3B: D9 5D F8              - fstp dword ptr [ebp-08]
+RogueHeroMG.DebugHandler::Update+3E: FF 15 1C C9 91 04     - call dword ptr [0491C91C]
+RogueHeroMG.DebugHandler::Update+44: D9 45 F8              - fld dword ptr [ebp-08]
+RogueHeroMG.DebugHandler::Update+47: 80 BE 04 01 00 00 00  - cmp byte ptr [esi+00000104],00
+RogueHeroMG.DebugHandler::Update+4E: 74 0E                 - je RogueHeroMG.DebugHandler::Update+5E
+RogueHeroMG.DebugHandler::Update+50: 8B CE                 - mov ecx,esi
+RogueHeroMG.DebugHandler::Update+52: D9 5D F8              - fstp dword ptr [ebp-08]
+RogueHeroMG.DebugHandler::Update+55: FF 15 6C C9 2B 06     - call dword ptr [062BC96C]
+}
+</AssemblerScript>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols>
+    <SymbolEntry>
+      <Name>memPointerTest</Name>
+      <Address>00B50000</Address>
+    </SymbolEntry>
+  </UserdefinedSymbols>
+  <LuaScript>--------
+-------- CE Table Tweaks
+--------
+---- Global Variables
+TABLE_TITLE = 'Rogue Heroes CET'
+TABLE_VERSION = 'v1'
+GAME_TITLE = 'Rogue Heroes'
+GAME_VERSION = '1.57.160.0'
+-- COMPACT_MODE = true
+DISABLE_HEADER_SORTING = true
+
+local function getFileVersionStr(path)
+	if path == nil then return end
+	local i, vt = getFileVersion(path)
+	if i and vt then
+		return string.format('%s.%s.%s.%s', vt.major, vt.minor, vt.release, vt.build)
+	end
+	return nil
+end
+function getPointerSize()
+	aasStr = [====[
+		globalAlloc(memPointerTest, 0x8)
+		memPointerTest:
+			db FF FF FF FF FF FF FF FF
+	]====]
+	local assembled = autoAssemble(aasStr)
+	if assembled then
+		local p1 = readQword('memPointerTest')
+		local p2 = readPointer('memPointerTest')
+		if p1 == p2 then
+			return 0x8
+		else
+			return 0x4
+		end
+	end
+	return nil
+end
+function getRegistrySizeStr()
+	if getPointerSize() == 0x4 then
+		return '(x32)'
+	else
+		return '(x64)'
+	end
+end
+function getGameVersion()
+	local modules = enumModules()
+	if modules == nil or modules[1] == nil then return end
+	return getFileVersion(modules[1].PathToFile)
+end
+function getGameVersionStr()
+	local modules = enumModules()
+	if modules == nil or modules[1] == nil then return end
+	return getFileVersionStr(modules[1].PathToFile)
+end
+function disableCompactMode()
+	control_setVisible(wincontrol_getControl(MainForm, 0), true)
+	control_setVisible(wincontrol_getControl(MainForm, 2), true)
+	control_setVisible(wincontrol_getControl(MainForm, 3), true)
+end
+function enableCompactMode()
+	control_setVisible(wincontrol_getControl(MainForm, 0), false)
+--	control_setVisible(wincontrol_getControl(MainForm, 2), false) -- Hides sig
+	control_setVisible(wincontrol_getControl(MainForm, 3), false)
+end
+function disableHeaderSorting()
+	local addressList = getAddressList()
+	local addressListHeader = component_getComponent(addressList, 1)
+	setMethodProperty(addressListHeader, 'OnSectionClick', nil)
+end
+function disableDragDrop()
+	local addressList = getAddressList()
+	local addressListTreeview = component_getComponent(addressList, 0)
+	setMethodProperty(addressListTreeview, 'OnDragOver', nil)
+	setMethodProperty(addressListTreeview, 'OnDragDrop', nil)
+	setMethodProperty(addressListTreeview, 'OnEndDrag', nil)
+end
+function setTitle(tableTitle, tableVersion, gameTitle, gameVersion, registrySizeStr)
+	if tableTitle == nil or tableTitle == '' then
+		tableTitle = TABLE_TITLE or 'TABLE_TITLE'
+	end
+	if tableVersion == nil or tableVersion == '' then
+		tableVersion = TABLE_VERSION or 'TABLE_VERSION'
+	end
+	if gameTitle == nil or gameTitle == '' then
+		gameTitle = GAME_TITLE or process or 'GAME_TITLE'
+		gameTitle = gameTitle:gsub('.exe', ''):gsub('.EXE', '')
+	end
+	if gameVersion == nil or gameVersion == '' then
+		gameVersion = GAME_VERSION or getGameVersionStr() or 'GAME_VERSION'
+	end
+	if registrySizeStr == nil or registrySizeStr == '' then
+		registrySizeStr = getRegistrySizeStr()
+	end
+	local ceRegistrySizeStr = (cheatEngineIs64Bit() and '(x64)') or '(x32)'
+	local titleStr = string.format('%s %s v: %s - %s v: %s - CE %s v: %s', 
+							gameTitle, registrySizeStr, gameVersion, 
+							tableTitle, tableVersion, 
+							ceRegistrySizeStr, getCEVersion())
+	MainForm.Caption = titleStr
+	-- control_setCaption(MainForm, titleStr)
+	return titleStr
+end
+function setupTable(compactMode, tableTitle, tableVersion, gameTitle, gameVersion, registrySizeStr)
+	if (COMPACT_MODE or compactMode) and COMPACT_MODE ~= false then
+		enableCompactMode()
+	end
+	if DISABLE_HEADER_SORTING then
+		disableHeaderSorting()
+	end
+	setTitle(tableTitle, tableVersion, gameTitle, gameVersion, registrySizeStr)
+end
+setupTable()
+if COMPACT_MODE then
+	enableCompactMode()
+end
+if DISABLE_HEADER_SORTING then
+	disableHeaderSorting()
+end
+
+
+--------
+-------- Auto Attach
+--------
+PROCESS_NAME = 'Rogue Heroes.exe'
+local autoAttachTimer = nil
+local autoAttachTimerInterval = 100
+local autoAttachTimerTicks = 0
+local autoAttachTimerTickMax = 5000
+
+local function autoAttachTimer_tick(timer)
+	if autoAttachTimerTickMax &gt; 0 and autoAttachTimerTicks &gt;= autoAttachTimerTickMax then
+		timer.destroy()
+	end
+	if getProcessIDFromProcessName(PROCESS_NAME) ~= nil then
+		timer.destroy()
+		openProcess(PROCESS_NAME)
+	end
+	autoAttachTimerTicks = autoAttachTimerTicks + 1
+end
+
+autoAttachTimer = createTimer(MainForm)
+autoAttachTimer.Interval = autoAttachTimerInterval
+autoAttachTimer.OnTimer = autoAttachTimer_tick
+</LuaScript>
+</CheatTable>

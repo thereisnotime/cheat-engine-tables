@@ -1,0 +1,954 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="31">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>8278</ID>
+      <Description>"--- Mr. Prepper v1.03 | Cheat Engine Table v1.0, [2021-03-19] COLONELRVH ---"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>A00000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8274</ID>
+      <Description>"========== - MAIN CHEATS -                    =========="</Description>
+      <Options moAllowManualCollapseAndExpand="1"/>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>FF8000</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>9103</ID>
+          <Description>"--- Initialize Cheat Features ---"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Activated="1"/>
+          <Color>008080</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if (LaunchMonoDataCollector()==0) then
+  error('Failed. Check the game version, cheat table or contact me on Patreon.')
+end
+{$asm}
+[ENABLE]
+[DISABLE]
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>8848</ID>
+              <Description>"[Stats]   == Activate: Alt+Insert     | Deactivate: Alt+Del              =="</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" Activated="1" RealAddress="00000000"/>
+              <Color>FF8000</Color>
+              <GroupHeader>1</GroupHeader>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Activate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>45</Key>
+                  </Keys>
+                  <ID>0</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                </Hotkey>
+              </Hotkeys>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9206</ID>
+                  <Description>"Activate Individual Script by Ctrl + Numpad (Numerical)"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>808000</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9200</ID>
+                  <Description>"Always in Great Conditions"</Description>
+                  <Options moHideChildren="1"/>
+                  <LastState Activated="1"/>
+                  <Color>808000</Color>
+                  <VariableType>Auto Assembler Script</VariableType>
+                  <AssemblerScript>/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscanregion(Get_Status_AOB,BuffAttributeCondition:Satisfied,BuffAttributeCondition:Satisfied+12c,F3 0F 10 40 54 F3 0F 5A C0) // should be unique
+alloc(newmem,$1000,Get_Status_AOB)
+
+label(code)
+label(return)
+
+newmem:
+  mov [rax+54],(float)100
+code:
+  movss xmm0,[rax+54]
+  jmp return
+
+Get_Status_AOB:
+  jmp newmem
+return:
+registersymbol(Get_Status_AOB)
+
+[DISABLE]
+
+Get_Status_AOB:
+  db F3 0F 10 40 54
+
+unregistersymbol(Get_Status_AOB)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: 1F64029418C
+
+1F640294165: 57                             -  push rdi
+1F640294166: 48 83 EC 10                    -  sub rsp,10
+1F64029416A: 48 8B F1                       -  mov rsi,rcx
+1F64029416D: 48 63 4E 18                    -  movsxd  rcx,dword ptr [rsi+18]
+1F640294171: 48 83 EC 20                    -  sub rsp,20
+1F640294175: 49 BB A0 62 22 40 F6 01 00 00  -  mov r11,000001F6402262A0
+1F64029417F: 41 FF D3                       -  call r11
+1F640294182: 48 83 C4 20                    -  add rsp,20
+1F640294186: 48 8B C8                       -  mov rcx,rax
+1F640294189: 83 39 00                       -  cmp dword ptr [rcx],00
+// ---------- INJECTING HERE ----------
+1F64029418C: F3 0F 10 40 54                 -  movss xmm0,[rax+54]
+// ---------- DONE INJECTING  ----------
+1F640294191: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1F640294195: 48 63 40 50                    -  movsxd  rax,dword ptr [rax+50]
+1F640294199: F2 0F 2A C8                    -  cvtsi2sd xmm1,eax
+1F64029419D: F2 0F 5E C1                    -  divsd xmm0,xmm1
+1F6402941A1: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1F6402941A5: F3 0F 11 6D EC                 -  movss [rbp-14],xmm5
+1F6402941AA: F3 0F 10 45 EC                 -  movss xmm0,[rbp-14]
+1F6402941AF: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1F6402941B3: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1F6402941B7: F3 0F 11 6D EC                 -  movss [rbp-14],xmm5
+}
+</AssemblerScript>
+                  <Hotkeys>
+                    <Hotkey>
+                      <Action>Activate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>45</Key>
+                      </Keys>
+                      <ID>0</ID>
+                      <ActivateSound>Activate</ActivateSound>
+                    </Hotkey>
+                    <Hotkey>
+                      <Action>Deactivate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>46</Key>
+                      </Keys>
+                      <ID>1</ID>
+                      <DeactivateSound>Deactivate</DeactivateSound>
+                    </Hotkey>
+                    <Hotkey>
+                      <Action>Toggle Activation</Action>
+                      <Keys>
+                        <Key>17</Key>
+                        <Key>97</Key>
+                      </Keys>
+                      <ID>2</ID>
+                      <ActivateSound>Activate</ActivateSound>
+                      <DeactivateSound>Deactivate</DeactivateSound>
+                    </Hotkey>
+                  </Hotkeys>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9211</ID>
+                  <Description>"0 Weight [Activate: Change Weight]"</Description>
+                  <LastState Activated="1"/>
+                  <Color>808000</Color>
+                  <VariableType>Auto Assembler Script</VariableType>
+                  <AssemblerScript>/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscan(Get_Weight_AOB,C8 48 63 41 50 F3 0F 10 41 54) // should be unique
+alloc(newmem,$1000,Get_Weight_AOB)
+
+label(code)
+label(return)
+
+newmem:
+  mov [rcx+54],0
+code:
+  movss xmm0,[rcx+54]
+  jmp return
+
+Get_Weight_AOB+05:
+  jmp newmem
+return:
+registersymbol(Get_Weight_AOB)
+
+[DISABLE]
+Get_Weight_AOB+05:
+  db F3 0F 10 41 54
+
+unregistersymbol(Get_Weight_AOB)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: 2158D4E4816
+
+2158D4E47EB: 4C 8B F9                       -  mov r15,rcx
+2158D4E47EE: 48 8B FA                       -  mov rdi,rdx
+2158D4E47F1: 4C 89 45 E8                    -  mov [rbp-18],r8
+2158D4E47F5: B9 03 00 00 00                 -  mov ecx,00000003
+2158D4E47FA: 48 83 EC 20                    -  sub rsp,20
+2158D4E47FE: 49 BB F0 A6 45 8D 15 02 00 00  -  mov r11,000002158D45A6F0
+2158D4E4808: 41 FF D3                       -  call r11
+2158D4E480B: 48 83 C4 20                    -  add rsp,20
+2158D4E480F: 48 8B C8                       -  mov rcx,rax
+2158D4E4812: 48 63 41 50                    -  movsxd  rax,dword ptr [rcx+50]
+// ---------- INJECTING HERE ----------
+2158D4E4816: F3 0F 10 41 54                 -  movss xmm0,[rcx+54]
+// ---------- DONE INJECTING  ----------
+2158D4E481B: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+2158D4E481F: F2 0F 2C C8                    -  cvttsd2si ecx,xmm0
+2158D4E4823: 2B C1                          -  sub eax,ecx
+2158D4E4825: 48 63 8D AC 00 00 00           -  movsxd  rcx,dword ptr [rbp+000000AC]
+2158D4E482C: 41 0F AF CF                    -  imul ecx,r15d
+2158D4E4830: 2B C1                          -  sub eax,ecx
+2158D4E4832: 89 07                          -  mov [rdi],eax
+2158D4E4834: 85 C0                          -  test eax,eax
+2158D4E4836: 40 0F 9C C0                    -  setl al
+2158D4E483A: 48 0F B6 C0                    -  movzx rax,al
+}
+</AssemblerScript>
+                  <Hotkeys>
+                    <Hotkey>
+                      <Action>Activate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>45</Key>
+                      </Keys>
+                      <ID>0</ID>
+                      <ActivateSound>Activate</ActivateSound>
+                    </Hotkey>
+                    <Hotkey>
+                      <Action>Deactivate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>46</Key>
+                      </Keys>
+                      <ID>1</ID>
+                      <DeactivateSound>Deactivate</DeactivateSound>
+                    </Hotkey>
+                    <Hotkey>
+                      <Action>Toggle Activation</Action>
+                      <Keys>
+                        <Key>17</Key>
+                        <Key>98</Key>
+                      </Keys>
+                      <ID>2</ID>
+                      <ActivateSound>Activate</ActivateSound>
+                      <DeactivateSound>Deactivate</DeactivateSound>
+                    </Hotkey>
+                  </Hotkeys>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>118</ID>
+              <Description>"[Extra]   == Activate: Alt+PageUp | Deactivate: Alt+PageDown =="</Description>
+              <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+              <LastState Value="" Activated="1" RealAddress="00000000"/>
+              <Color>FF8000</Color>
+              <GroupHeader>1</GroupHeader>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Activate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>33</Key>
+                  </Keys>
+                  <ID>0</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                </Hotkey>
+              </Hotkeys>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9218</ID>
+                  <Description>"No Item Removal &amp; Free Money Spending"</Description>
+                  <Options moHideChildren="1"/>
+                  <LastState Activated="1"/>
+                  <Color>808000</Color>
+                  <VariableType>Auto Assembler Script</VariableType>
+                  <AssemblerScript>/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscanregion(Remove_Item_AOB,ItemsManager:RemoveItem,ItemsManager:RemoveItem+337,89 87 40 01 00 00 83 3F) // should be unique
+alloc(newmem,$1000,Remove_Item_AOB)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  //mov [rdi+00000140],eax
+  jmp return
+
+Remove_Item_AOB:
+  jmp newmem
+  nop
+return:
+registersymbol(Remove_Item_AOB)
+
+[DISABLE]
+
+Remove_Item_AOB:
+  db 89 87 40 01 00 00
+
+unregistersymbol(Remove_Item_AOB)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: 2158DAD5817
+
+2158DAD57F0: 49 8B F0                       -  mov rsi,r8
+2158DAD57F3: 48 63 87 40 01 00 00           -  movsxd  rax,dword ptr [rdi+00000140]
+2158DAD57FA: 3B F0                          -  cmp esi,eax
+2158DAD57FC: 40 0F 9C C0                    -  setl al
+2158DAD5800: 48 0F B6 C0                    -  movzx rax,al
+2158DAD5804: 85 C0                          -  test eax,eax
+2158DAD5806: 41 0F 94 C6                    -  sete r14l
+2158DAD580A: 4D 0F B6 F6                    -  movzx r14,r14l
+2158DAD580E: 48 63 87 40 01 00 00           -  movsxd  rax,dword ptr [rdi+00000140]
+2158DAD5815: 2B C6                          -  sub eax,esi
+// ---------- INJECTING HERE ----------
+2158DAD5817: 89 87 40 01 00 00              -  mov [rdi+00000140],eax
+// ---------- DONE INJECTING  ----------
+2158DAD581D: 83 3F 00                       -  cmp dword ptr [rdi],00
+2158DAD5820: 49 BA 28 74 04 8C 15 02 00 00  -  mov r10,000002158C047428
+2158DAD582A: 48 8B CF                       -  mov rcx,rdi
+2158DAD582D: 48 83 EC 20                    -  sub rsp,20
+2158DAD5831: 49 BB 70 C2 A2 EB 15 02 00 00  -  mov r11,00000215EBA2C270
+2158DAD583B: 41 FF D3                       -  call r11
+2158DAD583E: 48 83 C4 20                    -  add rsp,20
+2158DAD5842: 48 8B C8                       -  mov rcx,rax
+2158DAD5845: BA 01 00 00 00                 -  mov edx,00000001
+2158DAD584A: 41 B8 01 00 00 00              -  mov r8d,00000001
+}
+</AssemblerScript>
+                  <Hotkeys>
+                    <Hotkey>
+                      <Action>Activate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>33</Key>
+                      </Keys>
+                      <ID>0</ID>
+                      <ActivateSound>Activate</ActivateSound>
+                    </Hotkey>
+                    <Hotkey>
+                      <Action>Deactivate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>34</Key>
+                      </Keys>
+                      <ID>1</ID>
+                      <DeactivateSound>Deactivate</DeactivateSound>
+                    </Hotkey>
+                  </Hotkeys>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9222</ID>
+                  <Description>"Food Always Fresh"</Description>
+                  <Options moHideChildren="1"/>
+                  <LastState Activated="1"/>
+                  <Color>808000</Color>
+                  <VariableType>Auto Assembler Script</VariableType>
+                  <AssemblerScript>/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscanregion(Set_Freshness_AOB,ItemInstance:UpdateExpire,ItemInstance:UpdateExpire+267,F3 0F 11 AE 2C 01 00 00 F3) // should be unique
+alloc(newmem,$1000,Set_Freshness_AOB)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  mov [rsi+0000012C],(float)1
+  jmp return
+
+Set_Freshness_AOB:
+  jmp newmem
+  nop 3
+return:
+registersymbol(Set_Freshness_AOB)
+
+[DISABLE]
+
+Set_Freshness_AOB:
+  db F3 0F 11 AE 2C 01 00 00
+
+unregistersymbol(Set_Freshness_AOB)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: 2158D50D537
+
+2158D50D507: F2 0F 59 D3                    -  mulsd xmm2,xmm3
+2158D50D50B: F3 0F 10 1D 6D 00 00 00        -  movss xmm3,[2158D50D580]
+2158D50D513: F3 0F 5A DB                    -  cvtss2sd xmm3,xmm3
+2158D50D517: F3 0F 10 A7 54 01 00 00        -  movss xmm4,[rdi+00000154]
+2158D50D51F: F3 0F 5A E4                    -  cvtss2sd xmm4,xmm4
+2158D50D523: F2 0F 5C DC                    -  subsd xmm3,xmm4
+2158D50D527: F2 0F 59 D3                    -  mulsd xmm2,xmm3
+2158D50D52B: F2 0F 59 CA                    -  mulsd xmm1,xmm2
+2158D50D52F: F2 0F 5C C1                    -  subsd xmm0,xmm1
+2158D50D533: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+// ---------- INJECTING HERE ----------
+2158D50D537: F3 0F 11 AE 2C 01 00 00        -  movss [rsi+0000012C],xmm5
+// ---------- DONE INJECTING  ----------
+2158D50D53F: F3 0F 10 87 2C 01 00 00        -  movss xmm0,[rdi+0000012C]
+2158D50D547: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+2158D50D54B: 66 0F 57 C9                    -  xorpd xmm1,xmm1
+2158D50D54F: 48 33 C0                       -  xor rax,rax
+2158D50D552: 66 0F 2F C8                    -  comisd xmm1,xmm0
+2158D50D556: 40 0F 97 C0                    -  seta al
+2158D50D55A: 48 8D 65 F0                    -  lea rsp,[rbp-10]
+2158D50D55E: 5F                             -  pop rdi
+2158D50D55F: 5E                             -  pop rsi
+2158D50D560: C9                             -  leave 
+}
+</AssemblerScript>
+                  <Hotkeys>
+                    <Hotkey>
+                      <Action>Activate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>33</Key>
+                      </Keys>
+                      <ID>0</ID>
+                      <ActivateSound>Activate</ActivateSound>
+                    </Hotkey>
+                    <Hotkey>
+                      <Action>Deactivate</Action>
+                      <Keys>
+                        <Key>18</Key>
+                        <Key>34</Key>
+                      </Keys>
+                      <ID>1</ID>
+                      <DeactivateSound>Deactivate</DeactivateSound>
+                    </Hotkey>
+                  </Hotkeys>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>117</ID>
+              <Description>"[Misc.][!]"</Description>
+              <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+              <LastState Value="" Activated="1" RealAddress="00000000"/>
+              <Color>0000FF</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9107</ID>
+                  <Description>"Proceed With Cautions! This section is for Advanced User Only"</Description>
+                  <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>0000FF</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>8266</ID>
+                  <Description>"[Backups][Unused]"</Description>
+                  <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>C0C0C0</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>8435</ID>
+                  <Description>"[Obsolete][Buggy]"</Description>
+                  <Options moHideChildren="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>C0C0C0</Color>
+                  <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>9305</ID>
+                      <Description>"Unlimited All Items &amp; Money"</Description>
+                      <LastState/>
+                      <Color>808000</Color>
+                      <VariableType>Auto Assembler Script</VariableType>
+                      <AssemblerScript>/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscanregion(Get_Items_AOB,DraggableItem:SetItem+178,DraggableItem:SetItem+578,48 63 80 40 01 00 00 41) // should be unique
+alloc(newmem,$1000,Get_Items_AOB)
+
+label(code)
+label(return)
+
+newmem:
+  mov [rax+00000140],#777
+code:
+  movsxd  rax,dword ptr [rax+00000140]
+  jmp return
+
+Get_Items_AOB:
+  jmp newmem
+  nop 2
+return:
+registersymbol(Get_Items_AOB)
+
+[DISABLE]
+
+Get_Items_AOB:
+  db 48 63 80 40 01 00 00
+
+unregistersymbol(Get_Items_AOB)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: 1F6402A59C8
+
+1F6402A5996: 48 83 C4 20                    -  add rsp,20
+1F6402A599A: 49 BA 18 E5 C2 79 F6 01 00 00  -  mov r10,000001F679C2E518
+1F6402A59A4: 49 8B CF                       -  mov rcx,r15
+1F6402A59A7: 48 83 EC 20                    -  sub rsp,20
+1F6402A59AB: 49 BB 20 BF 3F 5A F6 01 00 00  -  mov r11,000001F65A3FBF20
+1F6402A59B5: 41 FF D3                       -  call r11
+1F6402A59B8: 48 83 C4 20                    -  add rsp,20
+1F6402A59BC: 49 8B 4F 18                    -  mov rcx,[r15+18]
+1F6402A59C0: 48 89 48 18                    -  mov [rax+18],rcx
+1F6402A59C4: 49 8B 47 18                    -  mov rax,[r15+18]
+// ---------- INJECTING HERE ----------
+1F6402A59C8: 48 63 80 40 01 00 00           -  movsxd  rax,dword ptr [rax+00000140]
+// ---------- DONE INJECTING  ----------
+1F6402A59CF: 41 89 87 84 00 00 00           -  mov [r15+00000084],eax
+1F6402A59D6: 0F B6 45 D8                    -  movzx eax,byte ptr [rbp-28]
+1F6402A59DA: 85 C0                          -  test eax,eax
+1F6402A59DC: 74 18                          -  je 1F6402A59F6
+1F6402A59DE: 49 8B CF                       -  mov rcx,r15
+1F6402A59E1: 48 83 EC 20                    -  sub rsp,20
+1F6402A59E5: 49 BB F0 5A 2A 40 F6 01 00 00  -  mov r11,000001F6402A5AF0
+1F6402A59EF: 41 FF D3                       -  call r11
+1F6402A59F2: 48 83 C4 20                    -  add rsp,20
+1F6402A59F6: 49 8B CF                       -  mov rcx,r15
+}
+</AssemblerScript>
+                      <Hotkeys>
+                        <Hotkey>
+                          <Action>Activate</Action>
+                          <Keys>
+                            <Key>18</Key>
+                            <Key>45</Key>
+                          </Keys>
+                          <ID>0</ID>
+                          <ActivateSound>Activate</ActivateSound>
+                        </Hotkey>
+                        <Hotkey>
+                          <Action>Deactivate</Action>
+                          <Keys>
+                            <Key>18</Key>
+                            <Key>46</Key>
+                          </Keys>
+                          <ID>1</ID>
+                          <DeactivateSound>Deactivate</DeactivateSound>
+                        </Hotkey>
+                        <Hotkey>
+                          <Action>Toggle Activation</Action>
+                          <Keys>
+                            <Key>17</Key>
+                            <Key>98</Key>
+                          </Keys>
+                          <ID>2</ID>
+                          <ActivateSound>Activate</ActivateSound>
+                          <DeactivateSound>Deactivate</DeactivateSound>
+                        </Hotkey>
+                      </Hotkeys>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>9105</ID>
+          <Description>"&lt;-[HERE] INSTRUCTIONS | Tick the left square □ of this line to view -"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>008080</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>9110</ID>
+              <Description>"- Basic -"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>008080</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9121</ID>
+                  <Description>"Choose Yes on the table opening so it can detect the game automatically"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9111</ID>
+                  <Description>"- To Activate a Cheat"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>9114</ID>
+                      <Description>"1. Follow the [Activate] instructions"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>008080</Color>
+                      <GroupHeader>1</GroupHeader>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>9113</ID>
+                      <Description>"2. Tick on the square □ next to it"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>008080</Color>
+                      <GroupHeader>1</GroupHeader>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9112</ID>
+              <Description>"- Intermediate - "</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>008080</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9106</ID>
+                  <Description>"- For God Mode &amp; Instant Kill you must change the value to "Enabled" unless there's none"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9116</ID>
+                  <Description>"- You can find old cheats in [Misc.] for older version, in rare cases"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9117</ID>
+              <Description>"- Advanced | Master - "</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>008080</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9118</ID>
+                  <Description>"- All my codes are easy to understand and straightforward"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9119</ID>
+                  <Description>"- You can alter it as your own discretion, but you must keep my credits"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9120</ID>
+                  <Description>"- Any distributions of my tables &amp; codes are unadvised"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9115</ID>
+              <Description>"References"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9082</ID>
+                  <Description>"- [Activate: To Activate this cheat you must do this action first] -"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>808000</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9083</ID>
+                  <Description>"- [Update: To Update/Get the cheat's effects you must do this action first] -"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>808000</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8265</ID>
+      <Description>"========== - SPECIAL THANKS -               =========="</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>9236</ID>
+          <Description>"-------                Feb 2021 Patrons                -------"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>0066FF</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>9248</ID>
+              <Description>"List will be updated every 7th day of the month, or all patrons are charged"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>0066FF</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9281</ID>
+              <Description>"Q"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>008080</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9226</ID>
+              <Description>"Aaron Pinsky"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9227</ID>
+              <Description>"Biggus Dickus"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9277</ID>
+              <Description>"Chawklet Thundah"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9276</ID>
+              <Description>"James Peterson"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9282</ID>
+              <Description>"Jhaniel Bonilla"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9258</ID>
+              <Description>"Morsigni"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9283</ID>
+              <Description>"Tag"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9234</ID>
+              <Description>"Terrell Ford"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9237</ID>
+              <Description>"... and other great Patrons"</Description>
+              <LastState/>
+              <Color>808000</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+{
+Alex Valderrama
+Andrew Kinney
+Andy Mormon
+Anthony Dai
+Chris
+Connor Gerrard
+DerKampfKruemmel
+doubled
+Gavin Hawk
+Hackbart
+Isaac Missingham
+Ji Li
+Lars-Petter Kampen (LP)
+Leonardo Garcia
+Little Pretty
+Lokote2134
+Mason Badman
+Miracle Lovett
+Patrick Rudolph
+Roberto Hernandez
+Sah Dude
+Shay Butler
+Xerias
+Zeta
+}
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8849</ID>
+      <Description>"========== - CHANGES | NOTES -             =========="</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8908</ID>
+      <Description>"- Please support my work at -"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8909</ID>
+      <Description>"https://www.patreon.com/ColonelRVH"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols>
+    <SymbolEntry>
+      <Name>BLucre</Name>
+      <Address>015C0010</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>BHP</Name>
+      <Address>015C0000</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>GetHP</Name>
+      <Address>463A7445</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>GetLucre</Name>
+      <Address>463A9B27</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>IgnoreMana</Name>
+      <Address>463C8647</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>BaseGold</Name>
+      <Address>02680000</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>GetGold</Name>
+      <Address>00F6FCC9</Address>
+    </SymbolEntry>
+  </UserdefinedSymbols>
+  <Comments>If you want to support, Please consider become my patron at:
+----------------------
+https://www.patreon.com/ColonelRVH
+----------------------
+It would be a great help for me to cover my living expenses so I can focus on making  &amp; improving cheat for you. 
+----------------------
+© ColonelRVH, 2017
+</Comments>
+  <LuaScript>attachlist=getAutoAttachList()
+stringlist_add(attachlist,"MrPrepper.exe");
+</LuaScript>
+</CheatTable>

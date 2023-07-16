@@ -1,0 +1,2915 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="42">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>104783</ID>
+      <Description>"[ Activate ] - {Click here to add process automatically}"</Description>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+
+{$lua}
+OpenProcess("Necrosmith.exe")
+if (LaunchMonoDataCollector())==0
+then error ('Failure To Launch')
+end
+
+if getCEVersion() &lt; 7.4 then showMessage("If you are getting this message means your Cheat Engine software is outdated. Please update to the latest Cheat Engine version! Latest official public release version can be found at https://cheatengine.org/\nYour Cheat Engine Version : "..getCEVersion().."\nLatest Public Cheat Engine Version : 7.4") --[[MainForm.close()]]
+return end
+
+{$asm}
+
+luacall(function cycleFullCompact(sender,force); local state = not(compactmenuitem.Caption == 'Compact View Mode'); if force~=nil then state = not force end; compactmenuitem.Caption = state and 'Compact View Mode' or 'Full view Mode'; getMainForm().Splitter1.Visible = state; getMainForm().Panel4.Visible = state; getMainForm().Panel5.Visible = state; end; function addCompactMenu(); if compactmenualreadyexists then return end; local parent = getMainForm().Menu.Items; compactmenuitem = createMenuItem(parent); parent.add(compactmenuitem); compactmenuitem.Caption = 'Compact View Mode'; compactmenuitem.OnClick = cycleFullCompact; compactmenualreadyexists = 'yes'; end; addCompactMenu(); cycleFullCompact(nil,true))
+
+[DISABLE]
+
+luacall(cycleFullCompact(nil,false))
+
+
+
+
+
+
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>104784</ID>
+          <Description>"Speed Game"</Description>
+          <Options moHideChildren="1"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>104785</ID>
+              <Description>"Fast 5x"</Description>
+              <Color>4080FF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{ Game   : BleachBraveSouls.exe
+  Version:
+  Date   : 2021-09-21
+  Author : Genics
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+luacall(speedhack_setSpeed(5))
+
+[DISABLE]
+luacall(speedhack_setSpeed(1))
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>122</Key>
+                  </Keys>
+                  <ID>0</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>104786</ID>
+              <Description>"Slow 0.5x"</Description>
+              <Color>4080FF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{ Game   : BleachBraveSouls.exe
+  Version:
+  Date   : 2021-09-21
+  Author : Genics
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+luacall(speedhack_setSpeed(0.5))
+
+[DISABLE]
+luacall(speedhack_setSpeed(1))
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>121</Key>
+                  </Keys>
+                  <ID>0</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>104787</ID>
+              <Description>"NOTE : Active F10 Slow || F11 Fast"</Description>
+              <Color>0000FF</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>104788</ID>
+          <Description>"+++ SCRIPT +++"</Description>
+          <Options moHideChildren="1"/>
+          <Color>FF0000</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>104805</ID>
+              <Description>"Session Data"</Description>
+              <Color>FF0000</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{ Game   : Necrosmith.exe
+  Version: 
+  Date   : 2022-07-14
+  Author : BabyGroot
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+
+aobscanregion(pBase_2,UnitIconInfoUI:DoControlUnit,UnitIconInfoUI:DoControlUnit+6c,48 8B 80 A0 00 00 00 48 8B 4E 70) // should be unique
+alloc(newmem,$1000,pBase_2)
+
+alloc(mygg_2,8)
+registersymbol(mygg_2)
+
+label(code)
+label(return)
+
+mygg_2:
+dq
+
+newmem:
+
+code:
+  mov [mygg_2],rax
+  mov rax,[rax+000000A0]
+  jmp return
+
+pBase_2:
+  jmp newmem
+  nop 2
+return:
+registersymbol(pBase_2 mygg_2)
+
+[DISABLE]
+
+pBase_2:
+  db 48 8B 80 A0 00 00 00
+
+unregistersymbol(*)
+dealloc(*)
+
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>104790</ID>
+          <Description>"+++ POINTER +++"</Description>
+          <Options moHideChildren="1"/>
+          <Color>FF8000</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>104806</ID>
+              <Description>"Session Data - [ Active After Controller Character ]"</Description>
+              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+              <Color>FF8000</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>104807</ID>
+                  <Description>"pBase"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>C0C0C0</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>[mygg_2]</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>104867</ID>
+                  <Description>"Player"</Description>
+                  <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                  <Color>800040</Color>
+                  <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>104808</ID>
+                      <Description>"Name"</Description>
+                      <Color>4080FF</Color>
+                      <VariableType>String</VariableType>
+                      <Length>128</Length>
+                      <Unicode>1</Unicode>
+                      <CodePage>0</CodePage>
+                      <ZeroTerminate>1</ZeroTerminate>
+                      <Address>[mygg_2]+50</Address>
+                      <Offsets>
+                        <Offset>14</Offset>
+                        <Offset>10</Offset>
+                      </Offsets>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>104809</ID>
+                      <Description>"Gold Internal"</Description>
+                      <Color>0000FF</Color>
+                      <VariableType>4 Bytes</VariableType>
+                      <Address>[mygg_2]+50</Address>
+                      <Offsets>
+                        <Offset>18</Offset>
+                        <Offset>18</Offset>
+                      </Offsets>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>104810</ID>
+                      <Description>"Death Count"</Description>
+                      <Color>0000FF</Color>
+                      <VariableType>4 Bytes</VariableType>
+                      <Address>[mygg_2]+50</Address>
+                      <Offsets>
+                        <Offset>10</Offset>
+                        <Offset>50</Offset>
+                      </Offsets>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>104879</ID>
+                      <Description>"Day"</Description>
+                      <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                      <Color>FF0080</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>104881</ID>
+                          <Description>"Number"</Description>
+                          <Color>0000FF</Color>
+                          <VariableType>4 Bytes</VariableType>
+                          <Address>[mygg_2]+30</Address>
+                          <Offsets>
+                            <Offset>38</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>104880</ID>
+                          <Description>"Day Time"</Description>
+                          <Color>0000FF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>[mygg_2]+30</Address>
+                          <Offsets>
+                            <Offset>3C</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>104811</ID>
+                      <Description>"Army"</Description>
+                      <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                      <Color>FF0080</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>104812</ID>
+                          <Description>"Stats - [ Set Stat, And Build Army ]"</Description>
+                          <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                          <Color>8000FF</Color>
+                          <GroupHeader>1</GroupHeader>
+                          <CheatEntries>
+                            <CheatEntry>
+                              <ID>104813</ID>
+                              <Description>"Health"</Description>
+                              <Color>0000FF</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+18</Address>
+                              <Offsets>
+                                <Offset>10</Offset>
+                                <Offset>10</Offset>
+                                <Offset>30</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104814</ID>
+                              <Description>"Regen"</Description>
+                              <Color>0000FF</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+18</Address>
+                              <Offsets>
+                                <Offset>14</Offset>
+                                <Offset>10</Offset>
+                                <Offset>30</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104815</ID>
+                              <Description>"Armor"</Description>
+                              <Color>0000FF</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+18</Address>
+                              <Offsets>
+                                <Offset>18</Offset>
+                                <Offset>10</Offset>
+                                <Offset>30</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104818</ID>
+                              <Description>"Damage"</Description>
+                              <Color>0000FF</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+18</Address>
+                              <Offsets>
+                                <Offset>24</Offset>
+                                <Offset>10</Offset>
+                                <Offset>30</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104816</ID>
+                              <Description>"Move Speed"</Description>
+                              <Color>0000FF</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+18</Address>
+                              <Offsets>
+                                <Offset>1C</Offset>
+                                <Offset>10</Offset>
+                                <Offset>30</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104817</ID>
+                              <Description>"View Radius - [ Max 100 ]"</Description>
+                              <Color>0000FF</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+18</Address>
+                              <Offsets>
+                                <Offset>20</Offset>
+                                <Offset>10</Offset>
+                                <Offset>30</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                          </CheatEntries>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>104819</ID>
+                          <Description>"Units"</Description>
+                          <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                          <Color>8000FF</Color>
+                          <GroupHeader>1</GroupHeader>
+                          <CheatEntries>
+                            <CheatEntry>
+                              <ID>104820</ID>
+                              <Description>"Size Units - [ Don't Chance ]"</Description>
+                              <Color>C0C0C0</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+18</Address>
+                              <Offsets>
+                                <Offset>18</Offset>
+                                <Offset>18</Offset>
+                                <Offset>30</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104821</ID>
+                              <Description>"Unit [1]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104822</ID>
+                                  <Description>"Name"</Description>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104823</ID>
+                                  <Description>"Health Current"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104824</ID>
+                                  <Description>"Health Max"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104825</ID>
+                                  <Description>"Health Addition"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>50</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104826</ID>
+                                  <Description>"Health Multiplier"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>54</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104828</ID>
+                                  <Description>"Armor"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>5C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104831</ID>
+                                  <Description>"Health Regeneration"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A4</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104832</ID>
+                                  <Description>"View Radius"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A8</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104833</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>AC</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104830</ID>
+                                  <Description>"Bonus Stats"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104829</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104837</ID>
+                              <Description>"Unit [2]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104838</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104839</ID>
+                                  <Description>"Health Current"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104840</ID>
+                                  <Description>"Health Max"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104841</ID>
+                                  <Description>"Health Addition"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>50</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104842</ID>
+                                  <Description>"Health Multiplier"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>54</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104843</ID>
+                                  <Description>"Armor"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>5C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104844</ID>
+                                  <Description>"Health Regeneration"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A4</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104845</ID>
+                                  <Description>"View Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A8</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104846</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>AC</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104850</ID>
+                                  <Description>"Bonus Stats"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104851</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104852</ID>
+                              <Description>"Unit [3]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104853</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104854</ID>
+                                  <Description>"Health Current"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104855</ID>
+                                  <Description>"Health Max"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104856</ID>
+                                  <Description>"Health Addition"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>50</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104857</ID>
+                                  <Description>"Health Multiplier"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>54</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104858</ID>
+                                  <Description>"Armor"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>5C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104859</ID>
+                                  <Description>"Health Regeneration"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A4</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104860</ID>
+                                  <Description>"View Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A8</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104861</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>AC</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104865</ID>
+                                  <Description>"Bonus Stats"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104866</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104946</ID>
+                              <Description>"Unit [4]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104947</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104948</ID>
+                                  <Description>"Health Current"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104949</ID>
+                                  <Description>"Health Max"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104950</ID>
+                                  <Description>"Health Addition"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>50</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104951</ID>
+                                  <Description>"Health Multiplier"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>54</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104952</ID>
+                                  <Description>"Armor"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>5C</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104953</ID>
+                                  <Description>"Health Regeneration"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A4</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104954</ID>
+                                  <Description>"View Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>A8</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104955</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>AC</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104956</ID>
+                                  <Description>"Bonus Stats"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104957</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+18</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                          </CheatEntries>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>104868</ID>
+                      <Description>"Map"</Description>
+                      <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                      <Color>FF0080</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>104869</ID>
+                          <Description>"Towers"</Description>
+                          <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                          <Color>8000FF</Color>
+                          <GroupHeader>1</GroupHeader>
+                          <CheatEntries>
+                            <CheatEntry>
+                              <ID>104878</ID>
+                              <Description>"Size Tower - [ Don't Chance ]"</Description>
+                              <ShowAsSigned>0</ShowAsSigned>
+                              <Color>C0C0C0</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+28</Address>
+                              <Offsets>
+                                <Offset>18</Offset>
+                                <Offset>10</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104895</ID>
+                              <Description>"Tower [1]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104873</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104870</ID>
+                                  <Description>"Health Current"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104871</ID>
+                                  <Description>"Health Max"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104874</ID>
+                                  <Description>"Interact Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>68</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104876</ID>
+                                  <Description>"Attack Warning Delay"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104877</ID>
+                                  <Description>"View Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>74</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104875</ID>
+                                  <Description>"Interact Point"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>6C</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104872</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104919</ID>
+                              <Description>"Tower [2]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104920</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104921</ID>
+                                  <Description>"Health Current"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104922</ID>
+                                  <Description>"Health Max"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104923</ID>
+                                  <Description>"Interact Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>68</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104924</ID>
+                                  <Description>"Attack Warning Delay"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104925</ID>
+                                  <Description>"View Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>74</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104926</ID>
+                                  <Description>"Interact Point"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>6C</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104927</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104928</ID>
+                              <Description>"Tower [3]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104929</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104930</ID>
+                                  <Description>"Health Current"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104931</ID>
+                                  <Description>"Health Max"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104932</ID>
+                                  <Description>"Interact Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>68</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104933</ID>
+                                  <Description>"Attack Warning Delay"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104934</ID>
+                                  <Description>"View Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>74</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104935</ID>
+                                  <Description>"Interact Point"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>6C</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104936</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104937</ID>
+                              <Description>"Tower [4]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104938</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104939</ID>
+                                  <Description>"Health Current"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>48</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104940</ID>
+                                  <Description>"Health Max"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>4C</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104941</ID>
+                                  <Description>"Interact Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>68</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104942</ID>
+                                  <Description>"Attack Warning Delay"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>70</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104943</ID>
+                                  <Description>"View Radius"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>74</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104944</ID>
+                                  <Description>"Interact Point"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>6C</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104945</ID>
+                                  <Description>"Is Immortal?"</Description>
+                                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:No/Off/Disabled
+1:Yes/On/Enabled
+</DropDownList>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>8080FF</Color>
+                                  <VariableType>Byte</VariableType>
+                                  <Address>[mygg_2]+28</Address>
+                                  <Offsets>
+                                    <Offset>60</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>10</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                          </CheatEntries>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>104882</ID>
+                      <Description>"Machines - [ Not All Can Use Stats Pointer ]"</Description>
+                      <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                      <Color>FF0080</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>104883</ID>
+                          <Description>"Active Machines"</Description>
+                          <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                          <Color>8000FF</Color>
+                          <GroupHeader>1</GroupHeader>
+                          <CheatEntries>
+                            <CheatEntry>
+                              <ID>104884</ID>
+                              <Description>"Size - [ Don't Chance ]"</Description>
+                              <Color>C0C0C0</Color>
+                              <VariableType>4 Bytes</VariableType>
+                              <Address>[mygg_2]+50</Address>
+                              <Offsets>
+                                <Offset>18</Offset>
+                                <Offset>18</Offset>
+                                <Offset>28</Offset>
+                              </Offsets>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104885</ID>
+                              <Description>"Machine [1]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104888</ID>
+                                  <Description>"Name"</Description>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104903</ID>
+                                  <Description>"Name 2"</Description>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104891</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104893</ID>
+                                  <Description>"Life Time {Duration}"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>18</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104894</ID>
+                                  <Description>"Cooldown"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>88</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104896</ID>
+                                  <Description>"Upgrade Cost - [ After Edit Value, Need Restart Main Menu ]"</Description>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>90</Offset>
+                                    <Offset>78</Offset>
+                                    <Offset>20</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104897</ID>
+                              <Description>"Machine [2]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104898</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104904</ID>
+                                  <Description>"Name 2"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104899</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104900</ID>
+                                  <Description>"Life Time {Duration}"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>18</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104901</ID>
+                                  <Description>"Cooldown"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>88</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104902</ID>
+                                  <Description>"Upgrade Cost - [ After Edit Value, Need Restart Main Menu ]"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>90</Offset>
+                                    <Offset>78</Offset>
+                                    <Offset>28</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104905</ID>
+                              <Description>"Machine [3]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104906</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104907</ID>
+                                  <Description>"Name 2"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104908</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104909</ID>
+                                  <Description>"Life Time {Duration}"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>18</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104910</ID>
+                                  <Description>"Cooldown"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>88</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104911</ID>
+                                  <Description>"Upgrade Cost - [ After Edit Value, Need Restart Main Menu ]"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>90</Offset>
+                                    <Offset>78</Offset>
+                                    <Offset>30</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104912</ID>
+                              <Description>"Machine [4]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104913</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104914</ID>
+                                  <Description>"Name 2"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104915</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104916</ID>
+                                  <Description>"Life Time {Duration}"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>18</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104917</ID>
+                                  <Description>"Cooldown"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>88</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104918</ID>
+                                  <Description>"Upgrade Cost - [ After Edit Value, Need Restart Main Menu ]"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>90</Offset>
+                                    <Offset>78</Offset>
+                                    <Offset>38</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104958</ID>
+                              <Description>"Machine [5]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104959</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>40</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104960</ID>
+                                  <Description>"Name 2"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>40</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104961</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>40</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104962</ID>
+                                  <Description>"Life Time {Duration}"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>18</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>40</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104963</ID>
+                                  <Description>"Cooldown"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>88</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>40</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104964</ID>
+                                  <Description>"Upgrade Cost - [ After Edit Value, Need Restart Main Menu ]"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>90</Offset>
+                                    <Offset>78</Offset>
+                                    <Offset>40</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104965</ID>
+                              <Description>"Machine [6]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104966</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104967</ID>
+                                  <Description>"Name 2"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104968</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104969</ID>
+                                  <Description>"Life Time {Duration}"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>18</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104970</ID>
+                                  <Description>"Cooldown"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>88</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104971</ID>
+                                  <Description>"Upgrade Cost - [ After Edit Value, Need Restart Main Menu ]"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>90</Offset>
+                                    <Offset>78</Offset>
+                                    <Offset>48</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                            <CheatEntry>
+                              <ID>104972</ID>
+                              <Description>"Machine [7]"</Description>
+                              <Options moHideChildren="1" moManualExpandCollapse="1"/>
+                              <Color>FF00FF</Color>
+                              <GroupHeader>1</GroupHeader>
+                              <CheatEntries>
+                                <CheatEntry>
+                                  <ID>104973</ID>
+                                  <Description>"Name"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>50</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104974</ID>
+                                  <Description>"Name 2"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>4080FF</Color>
+                                  <VariableType>String</VariableType>
+                                  <Length>128</Length>
+                                  <Unicode>1</Unicode>
+                                  <CodePage>0</CodePage>
+                                  <ZeroTerminate>1</ZeroTerminate>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>14</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>60</Offset>
+                                    <Offset>50</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104975</ID>
+                                  <Description>"Move Speed"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>50</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104976</ID>
+                                  <Description>"Life Time {Duration}"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>18</Offset>
+                                    <Offset>80</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>50</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104977</ID>
+                                  <Description>"Cooldown"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>Float</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>88</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>88</Offset>
+                                    <Offset>50</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                                <CheatEntry>
+                                  <ID>104978</ID>
+                                  <Description>"Upgrade Cost - [ After Edit Value, Need Restart Main Menu ]"</Description>
+                                  <ShowAsSigned>0</ShowAsSigned>
+                                  <Color>0000FF</Color>
+                                  <VariableType>4 Bytes</VariableType>
+                                  <Address>[mygg_2]+50</Address>
+                                  <Offsets>
+                                    <Offset>90</Offset>
+                                    <Offset>78</Offset>
+                                    <Offset>50</Offset>
+                                    <Offset>10</Offset>
+                                    <Offset>18</Offset>
+                                    <Offset>28</Offset>
+                                  </Offsets>
+                                </CheatEntry>
+                              </CheatEntries>
+                            </CheatEntry>
+                          </CheatEntries>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>105274</ID>
+      <Description>"============================"</Description>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>104596</ID>
+      <Description>"[&lt;--CHECKBOX] NOTES"</Description>
+      <Options moHideChildren="1" moManualExpandCollapse="1"/>
+      <Color>0080FF</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>104601</ID>
+          <Description>"[&lt;--CHECKBOX] If You Like This Table, Don't Forget To Give A Thumbs Up On This Link"</Description>
+          <Options moHideChildren="1"/>
+          <Color>0080FF</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$LUA}
+if syntaxcheck then return end
+[ENABLE]
+ShellExecute('https://fearlessrevolution.com/viewtopic.php?p=258913#p258913')
+{$asm}
+nop
+[DISABLE]
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>104602</ID>
+              <Description>"https://www.cheatengine.org/"</Description>
+              <Color>008000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>104603</ID>
+          <Description>"====================="</Description>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>105268</ID>
+          <Description>"[&lt;--CHECKBOX] Check build Id / Date Patches Game"</Description>
+          <Options moHideChildren="1"/>
+          <Color>0080FF</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$LUA}
+if syntaxcheck then return end
+[ENABLE]
+ShellExecute('https://steamdb.info/app/1949190/patchnotes/')
+{$asm}
+nop
+[DISABLE]
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>105269</ID>
+              <Description>"https://www.cheatengine.org/"</Description>
+              <Color>008000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>105270</ID>
+          <Description>"====================="</Description>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>105271</ID>
+          <Description>"[&lt;--CHECKBOX] Link Game"</Description>
+          <Options moHideChildren="1"/>
+          <Color>0080FF</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$LUA}
+if syntaxcheck then return end
+[ENABLE]
+ShellExecute('https://store.steampowered.com/app/1949190/Necrosmith/')
+{$asm}
+nop
+[DISABLE]
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>105272</ID>
+              <Description>"https://www.cheatengine.org/"</Description>
+              <Color>008000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>105273</ID>
+          <Description>"====================="</Description>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>104151</ID>
+          <Description>"[&lt;--CHECKBOX] Download Cheat Engine"</Description>
+          <Options moHideChildren="1"/>
+          <Color>0080FF</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$LUA}
+if syntaxcheck then return end
+[ENABLE]
+ShellExecute('https://www.cheatengine.org/')
+{$asm}
+nop
+[DISABLE]
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>104154</ID>
+              <Description>"https://www.cheatengine.org/"</Description>
+              <Color>008000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>105275</ID>
+          <Description>"====================="</Description>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>104979</ID>
+          <Description>"Version Game : 1.0.0.193 ( 3835169 )"</Description>
+          <Color>808000</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>105276</ID>
+          <Description>"Build ID : ( 9120530 )"</Description>
+          <Color>808000</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <CheatCodes>
+    <CodeEntry>
+      <Description>Change of mov [rax+0000009C],esi</Description>
+      <AddressString>143B6F65CF5</AddressString>
+      <Before>
+        <Byte>47</Byte>
+        <Byte>20</Byte>
+        <Byte>83</Byte>
+        <Byte>38</Byte>
+        <Byte>00</Byte>
+      </Before>
+      <Actual>
+        <Byte>89</Byte>
+        <Byte>B0</Byte>
+        <Byte>9C</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+      </Actual>
+      <After>
+        <Byte>48</Byte>
+        <Byte>B9</Byte>
+        <Byte>00</Byte>
+        <Byte>2C</Byte>
+        <Byte>7C</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of je Virtys.Nebula.Client.ViewModel.Domain:UnitVM:set_LifeCurrent+d0</Description>
+      <AddressString>143B6F65D59</AddressString>
+      <Before>
+        <Byte>8B</Byte>
+        <Byte>F0</Byte>
+        <Byte>4D</Byte>
+        <Byte>85</Byte>
+        <Byte>F6</Byte>
+      </Before>
+      <Actual>
+        <Byte>0F</Byte>
+        <Byte>84</Byte>
+        <Byte>21</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+      </Actual>
+      <After>
+        <Byte>49</Byte>
+        <Byte>8B</Byte>
+        <Byte>06</Byte>
+        <Byte>48</Byte>
+        <Byte>8B</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of je Virtys.Nebula.Client.ViewModel.Domain:GroupVM:GetSightRange+56</Description>
+      <AddressString>1C8357DE4F9</AddressString>
+      <Before>
+        <Byte>B6</Byte>
+        <Byte>45</Byte>
+        <Byte>B4</Byte>
+        <Byte>85</Byte>
+        <Byte>C0</Byte>
+      </Before>
+      <Actual>
+        <Byte>74</Byte>
+        <Byte>1B</Byte>
+      </Actual>
+      <After>
+        <Byte>48</Byte>
+        <Byte>8B</Byte>
+        <Byte>CD</Byte>
+        <Byte>48</Byte>
+        <Byte>83</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of movsxd  rdi,dword ptr [rax]</Description>
+      <AddressString>1CF5AE4FB60</AddressString>
+      <Before>
+        <Byte>CC</Byte>
+        <Byte>CF</Byte>
+        <Byte>01</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+      </Before>
+      <Actual>
+        <Byte>48</Byte>
+        <Byte>63</Byte>
+        <Byte>38</Byte>
+      </Actual>
+      <After>
+        <Byte>0F</Byte>
+        <Byte>B6</Byte>
+        <Byte>45</Byte>
+        <Byte>B4</Byte>
+        <Byte>85</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of movzx eax,byte ptr [eax+50]</Description>
+      <AddressString>1990B422</AddressString>
+      <Before>
+        <Byte>EC</Byte>
+        <Byte>04</Byte>
+        <Byte>8B</Byte>
+        <Byte>45</Byte>
+        <Byte>08</Byte>
+      </Before>
+      <Actual>
+        <Byte>0F</Byte>
+        <Byte>B6</Byte>
+        <Byte>40</Byte>
+        <Byte>50</Byte>
+      </Actual>
+      <After>
+        <Byte>85</Byte>
+        <Byte>C0</Byte>
+        <Byte>74</Byte>
+        <Byte>16</Byte>
+        <Byte>8B</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of movzx eax,byte ptr [eax+00000081]</Description>
+      <AddressString>1990B42D</AddressString>
+      <Before>
+        <Byte>74</Byte>
+        <Byte>16</Byte>
+        <Byte>8B</Byte>
+        <Byte>45</Byte>
+        <Byte>08</Byte>
+      </Before>
+      <Actual>
+        <Byte>0F</Byte>
+        <Byte>B6</Byte>
+        <Byte>80</Byte>
+        <Byte>81</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+      </Actual>
+      <After>
+        <Byte>85</Byte>
+        <Byte>C0</Byte>
+        <Byte>0F</Byte>
+        <Byte>94</Byte>
+        <Byte>C0</Byte>
+      </After>
+    </CodeEntry>
+    <CodeEntry>
+      <Description>Change of fld dword ptr [edi+000000A4]</Description>
+      <AddressString>1AB26261</AddressString>
+      <Before>
+        <Byte>A4</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+      </Before>
+      <Actual>
+        <Byte>D9</Byte>
+        <Byte>87</Byte>
+        <Byte>A4</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+        <Byte>00</Byte>
+      </Actual>
+      <After>
+        <Byte>D9</Byte>
+        <Byte>45</Byte>
+        <Byte>0C</Byte>
+        <Byte>DE</Byte>
+        <Byte>E9</Byte>
+      </After>
+    </CodeEntry>
+  </CheatCodes>
+  <UserdefinedSymbols/>
+</CheatTable>

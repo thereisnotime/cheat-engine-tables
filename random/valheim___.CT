@@ -1,0 +1,4062 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="34">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>1</ID>
+      <Description>"Valheim"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{$lua}
+function onMemRecPreExecute(memoryrecord, newstate)
+  if memoryrecord.Type == vtAutoAssembler then LaunchMonoDataCollector()end
+end
+
+function onMemRecPostExecute(memoryrecord, newState, succeeded )
+  if memoryrecord.Type == vtAutoAssembler then
+    miMonoActivateClick(sender)
+  end
+end
+
+function isStructExist(name)
+  local structCount=getStructureCount()
+  for i=0,structCount-1 do
+    local struct=getStructure(i)
+    if(struct.Name==name)then return struct end
+  end
+  return nil
+end
+
+function findOpcodes(address,opcode,size)
+  if not size then size=0x50 end
+  address=getAddressSafe(address)
+  if not address then return nil end
+  local addr={}
+  local i=0
+  local j=1
+  while(i&lt;size) do
+    local ext, opc, byt, add=splitDisassembledString(disassemble(address+i))
+    if string.find(opc,opcode) then
+      addr[j]=address+i
+      j=j+1
+    end
+    i=i+getInstructionSize(address+i)
+  end
+  return addr
+end
+
+function indexdism(Address)
+  Address=getAddressSafe(Address)
+  if not Address then return nil end
+  size=0x100
+  local addr={}
+  local i=0
+  local j=1
+  while(i&lt;size) do
+    addr[j]={}
+    addr[j].ext, addr[j].opc, addr[j].byt, addr[j].add=splitDisassembledString(disassemble(Address+i))
+    j=j+1
+	i=i+getInstructionSize(Address+i)
+  end
+  return addr
+end
+
+function mono_find_class(classname)
+	local ass=mono_enumAssemblies()
+	local parent
+	if string.find(classname,':') then parent=classname:sub(1,string.find(classname,':')-1) classname=classname:sub(string.find(classname,':')+1,classname:len()) end
+	if ass==nil then return nil end
+	for i=1, #ass do
+		if monopipe==nil then print('mono not active...')return 0 end
+		local c=mono_image_enumClasses(mono_getImageFromAssembly(ass[i]))
+		if c then
+			local j
+			for j=1, #c do
+				if c[j].classname==classname then
+					local cparent
+					if parent then local fields=mono_class_enumFields(c[j].class, true) for l,v in ipairs(fields) do if v.name=='parent' then if parent==v.typename then return c[j].class end end end
+                                        else return c[j].class end
+				end
+			end
+		end
+	end
+    return nil
+end
+
+
+function mono_find_classes(namespace,classname)
+	local ass=mono_enumAssemblies()
+	local classes,k={},1
+	if string.find(classname,':') then parent=classname:sub(1,string.find(classname,':')-1) classname=classname:sub(string.find(classname,':')+1,classname:len()) end
+	if ass==nil then return nil end
+	for i=1, #ass do
+		if monopipe==nil then print('mono not active...')return 0 end
+		local c=mono_image_enumClasses(mono_getImageFromAssembly(ass[i]))
+		if c then
+			local j
+			for j=1, #c do
+				if c[j].namespace==namespace and string.find(c[j].classname,classname) then classes[k]=c[j] k=k+1 end
+			end
+		end
+	end
+    return classes
+end
+
+function mono_findMethods(classname,methodname)
+	local class=mono_find_class(classname)
+	local result,m={},1
+	if class then local methods = mono_class_enumMethods(class,false)
+		for l,v in ipairs(methods) do if v.name==methodname then result[m]=v.method m=m+1 end  end
+	end
+	return result
+end
+
+function mono_findMethodBySignature(classname,methodname,paramtype,paramname,rettype,printall)
+  local methods=mono_findMethods(classname,methodname)
+  local score,result,ptype,pname,rtype,j={}
+  if #methods==0 then return nil end
+  for i=1,#methods do
+    score[i]=0
+    ptype,pname,rtype=mono_method_getSignature(methods[i])
+    if printall then
+      print('\n'..i..'.'..ptype..'\n{')
+      for k=1,#pname do
+        print('  '..pname[k])
+      end
+      print('}\n'..rtype)
+    end
+    if paramtype and paramtype==ptype then score[i]=score[i]+1 end
+    if paramname and type(paramname)==type({}) then
+      if #paramname==#pname then score[i]=score[i]+1 end
+      for j=1,#paramname do
+        if paramname[j]==pname[j] then score[i]=score[i]+1 end
+      end
+    end
+    if rettype and rettype==rtype then score[i]=score[i]+1 end
+    if not result and score[i]&gt;0 then result=i
+    elseif result and score[i]&gt;score[result] then result=i end
+  end
+  if result then result=methods[result] end
+  return result
+end
+
+function mono_compile_methodS(method)
+  local address=mono_compile_method(method)
+  if not address then return address end
+  return string.format('%X',address)
+end
+
+
+function StructAddToListSymbol(StructName,StartOffset,StopOffset,BaseAddress,OffsetOnly,AppentTo)
+  if not StartOffset then StartOffset=0 end
+  if not StopOffset then StopOffset=0xFFFFFF end
+  local structCount=getStructureCount()
+  local struct
+  for i=0,structCount-1 do
+    local stru=getStructure(i)
+    if stru.Name==StructName then struct=stru break end
+  end
+  if struct then
+    for i=0,struct.Count-1 do
+      local e=struct.Element[i]
+      if e.Offset&gt;=StartOffset and e.Offset&lt;=StopOffset then
+        local rec=getAddressList().createMemoryRecord()
+        if AppentTo then rec.appendToEntry(AppentTo) end
+        rec.setDescription(e.Name)
+        if OffsetOnly then
+          if BaseAddress then rec.setAddress(BaseAddress) rec.OffsetCount=1 rec.Offset[0]=e.Offset
+          else rec.setAddress(string.format('+%X',e.Offset))end
+        else
+          if BaseAddress then rec.setAddress(BaseAddress) rec.OffsetCount=1 rec.OffsetText[0]=StructName..'.'..e.Name
+          else rec.setAddress(string.format('+%s.%s',StructName,e.Name))end
+        end
+        rec.Type=e.Vartype
+      end
+    end
+  end
+end
+
+function mono_creatememrec(namespace,classname,StartOffset,StopOffset,BaseAddress,AppentTo)
+  if not StartOffset then StartOffset=0 end
+  if not StopOffset then StopOffset=0xFFFFFF end
+  local fields =mono_class_enumFields(mono_findClass(namespace,classname),true)
+  local struct=createStructure(classname)
+  if BaseAddress and #fields==0 then --print('banana')
+    miMonoActivateClick(sender)
+    LaunchMonoDataCollector()
+    --print(string.format('%X',BaseAddress))
+    local realaddress, classaddress=mono_object_findRealStartOfObject(BaseAddress)
+    --print(string.format('%X',classaddress))
+    --mono_structureDissectOverrideCallback(struct, BaseAddress)
+    fields =mono_class_enumFields(classaddress,true)
+    miMonoActivateClick(sender)
+    LaunchMonoDataCollector()
+    if #fields==0 then mono_structureDissectOverrideCallback(struct, BaseAddress) end
+
+  end
+  struct.beginUpdate()
+  for n=1,#fields do
+    if not fields[n].isStatic and not fields[n].isConst then
+      local e=struct.addElement()
+      e.Offset=fields[n].offset
+      e.Name=fields[n].name
+      e.Vartype=monoTypeToVarType(fields[n].monotype)
+      if e.Vartype==vtPointer then e.Name=fields[n].typename..' '..e.Name end
+    end
+  end
+  struct.endUpdate()
+  --print(struct.Count)
+
+  for i=0,struct.Count-1 do
+    local e=struct.Element[i]
+    if e.Offset&gt;=StartOffset and e.Offset&lt;=StopOffset then
+      local rec=getAddressList().createMemoryRecord()
+      if AppentTo then rec.appendToEntry(AppentTo) end
+      rec.DontSave=true
+      rec.setDescription(string.format('[%03X] ',e.Offset)..e.Name)
+      rec.setAddress(string.format('+%X',e.Offset))
+      if e.Vartype==vtPointer then
+        local cname=e.Name
+        if string.find(e.Name,' ') then cname=e.Name:sub(1,string.find(e.Name,' ')-1)end
+        rec.OffsetCount=1
+        rec.Offset[0]=0
+
+        --print(cname)
+
+        if string.find(cname,'String') then
+          rec.Vartype='vtByte'
+          rec.IsAddressGroupHeader=true
+          local tec=getAddressList().createMemoryRecord()
+          tec.setDescription('length')
+          tec.setAddress('+10')
+          tec.VarType='vtDword'
+          tec.appendToEntry(rec)
+
+          local tec=getAddressList().createMemoryRecord()
+          tec.setDescription('value')
+          tec.setAddress('+14')
+          tec.VarType='vtString'
+          tec.String.Size=0x100
+          tec.String.Unicode=true
+          tec.appendToEntry(rec)
+
+        else
+          rec.Vartype='vtAutoAssembler'
+          rec.Script=([[
+{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+ENABLE
+mono_creatememrec('','classname',0x10,nil,memrec.getCurrentAddress(),memrec)
+DISABLE
+        ]]):gsub('ENABLE','[ENABLE]'):gsub('DISABLE','[DISABLE]'):gsub('classname',cname)
+        end
+
+      else rec.Type=e.Vartype end
+      if rec.varType=='vtString' then rec.String.Size=0x100 rec.String.Unicode=true end
+    end
+  end
+end
+
+function monocreatestruct(namespace,classname)
+  local struct=isStructExist(classname)
+  if struct then struct:Destroy() end
+  local fields =mono_class_enumFields(mono_findClass(namespace,classname),true)
+  local struct=createStructure(classname)
+  struct.beginUpdate()
+  for n=1,#fields do
+    local e=struct.addElement()
+    e.Offset=fields[n].offset
+    e.Name=fields[n].name
+    e.Vartype=monoTypeToVarType(fields[n].monotype)
+  end
+  struct.endUpdate()
+  struct.addToGlobalStructureList()
+end
+
+function findAddress(Symbol,number,Address)
+    Address=getAddressSafe(Address)
+    size=0x100
+	local addr={}
+	local i=0
+	local j=1
+	while(i&lt;size) do
+		local ext, opc, byt, add=splitDisassembledString(disassemble(Address+i))
+		if ext~="" then
+			if(opc:find(",")~=nil)then
+				opc=opc:sub(opc:find(",")+1,opc:len())
+			else
+				opc=opc:sub(opc:find(" ")+1,opc:len())
+			end
+			addr[j]=opc:gsub("%[",""):gsub("]","") j=j+1
+        end
+		if opc:find('],') then
+            opc=opc:sub(opc:find("%[")+1,opc:find("]")-1)
+            if tonumber(opc,16) then addr[j]=opc j=j+1 end
+        end
+
+		i=i+getInstructionSize(Address+i)
+	end
+    if number&lt;=0 then return addr end
+    --for i=1,#addr do print(addr[i]) end
+	unregisterSymbol(Symbol)
+	registerSymbol(Symbol,getAddressSafe(addr[number]),true)
+end
+
+function getInsForJump(address,registername,destination,allocsize,SharedMemoryName)
+  address = getAddressSafe(address)
+  if not address then error('getInsForJump address nil') return end
+  if not allocsize then allocsize=4096 end
+  destination=getAddressSafe(destination)
+  if not destination then
+	if not SharedMemoryName then destination = allocateMemory(allocsize,address)
+	else destination = allocateSharedMemory(SharedMemoryName,allocsize) end
+  end
+  local size = (address+5-destination&gt;0x7FFFFFFF) and 14 or 5
+  if registername then
+	unregisterSymbol(registername)
+	registerSymbol(registername,destination,true)
+  end
+  local opcodes = {}
+  local i = 0
+  while(i&lt;size) do
+    local ext, opc=splitDisassembledString(disassemble(address+i))
+    opcodes[#opcodes+1] = opc
+    i=i+getInstructionSize(address+i)
+  end
+  local copy = table.concat(opcodes,'\r\n')
+  local readAsTable = true
+  local byt = readBytes(address,i,readAsTable)
+  for j=1,#byt do byt[j] = ('%02X'):format(byt[j]) end
+  local bytes = table.concat(byt, ' ')
+  return i,copy,bytes,size,destination
+end
+
+function enablescript(name,registername,addressname,script,disable)
+    local address=getAddress(addressname)
+    if disable then script=(script):format(address,registername,readBytes(registername,1))
+    else
+        local i,copy,bytes,size =getInsForJump(address,name)
+        script=(script):format(registername, registername, name, copy, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+    end
+    local success,erro=autoAssembleCheck(script)
+    if not success then print('\n'..erro..'\n')
+      local scriptstr=createStringlist()scriptstr.Text=script
+      for j=0,scriptstr.Count-1 do print(string.format('%u\t%s',j+1,scriptstr[j])) end
+      if not disable then deAlloc(name)unregisterSymbol(name)end
+      error(name..' autoAssemble failed')
+    end
+    autoAssemble(script)
+    if disable then deAlloc(name)unregisterSymbol(name)unregisterSymbol(registername)end
+end
+
+function AAscript(script)
+  local success,erro=autoAssembleCheck(script)
+  if not success then
+    print('\n'..erro..'\n')
+    local scriptstr=createStringlist()scriptstr.Text=script
+    for j=0,scriptstr.Count-1 do print(string.format('%u\t%s',j+1,scriptstr[j])) end
+    error('autoAssemble failed')
+  end
+  autoAssemble(script)
+end
+
+function monoform_exportArrayStructInternal(acs, arraytype, elemtype, recursive, structmap, makeglobal, reload)
+  if acs~=nil then
+    cs = monoform_exportStruct(elemtype, nil, recursive, false, structmap, makeglobal)
+    if cs~=nil and reload then
+      structure_beginUpdate(acs)
+      local ce=acs.addElement()
+      ce.Name='Count'
+      if targetIs64Bit() then
+        ce.Offset=0x18
+      else
+        ce.Offset=0xC
+      end
+      ce.Vartype=vtDword
+      ce.setChildStruct(cs)
+
+      local j
+      local psize
+      if targetIs64Bit() then
+        psize=8
+      else
+        psize=4
+      end
+
+      if string.find(cs.Name,'+')then
+        local size=cs.Element[cs.Count-1].Offset+cs.Element[cs.Count-1].Bytesize-cs.Element[0].Offset
+        print(size)
+
+
+      end
+
+      for j=0, 100 do -- Arbitrarily add 10 elements
+        ce=acs.addElement()
+        ce.Name=string.format("Item[%d]",j)
+
+        local start
+        if targetIs64Bit() then
+          start=0x20
+        else
+          start=0x10
+        end
+
+        ce.Offset=j*psize+start
+        ce.Vartype=vtPointer
+        ce.setChildStruct(cs)
+      end
+      structure_endUpdate(acs)
+    end
+  end
+  return acs
+end
+
+
+function cycleFullCompact(sender,force)
+local state = not(compactmenuitem.Caption == 'Compact View Mode')
+if force~=nil
+then state = not force
+end
+compactmenuitem.Caption = state and 'Compact View Mode' or 'Full View Mode'
+getMainForm().Splitter1.Visible = state
+getMainForm().Panel4.Visible = state
+getMainForm().Panel5.Visible = state
+end
+
+function addCompactMenu()
+if compactmenualreadyexists
+then return end
+local parent = getMainForm().Menu.Items
+compactmenuitem = createMenuItem(parent)
+parent.add(compactmenuitem)
+compactmenuitem.Caption = 'Compact View Mode'
+compactmenuitem.OnClick = cycleFullCompact
+compactmenualreadyexists = 'yes'
+end
+
+addCompactMenu()
+--cycleFullCompact(nil,true)
+
+if syntaxcheck then return end
+
+[ENABLE]
+if not process or not enumModules()[1] then print('Error: No process selected...') error('process is nil') end
+LaunchMonoDataCollector()
+findAddress('m_debugMode',4,'Player:Update')
+findAddress('LocalPlayer',1,'Player:SetLocalPlayer')
+findAddress('EnvMan',1,'EnvMan:Awake')
+findAddress('Minimap',1,'Minimap:Awake')
+findAddress('ObjectDB',1,'ObjectDB:Awake')
+findAddress('ZNet',1,'ZNet:Awake')
+findAddress('Game',1,'Game:Awake')
+findAddress('ZoneSystem',1,'ZoneSystem:Awake')
+findAddress('ZNetScene',1,'ZNetScene:Awake')
+findAddress('Chat',1,'Chat:Awake')
+findAddress('GameCamera',1,'GameCamera:Awake')
+findAddress('zeroVector',1,'UnityEngine:Vector3:get_zero')
+findAddress('m_isServer',4,'Console:IsCheatsEnabled')
+findAddress('Players',2,'Player:Awake')
+
+monocreatestruct('','Player')
+monocreatestruct('','Skills')
+monocreatestruct('','Skill')
+monocreatestruct('','SkillDef')
+monocreatestruct('','Inventory')
+monocreatestruct('','Character')
+monocreatestruct('','EnvMan')
+monocreatestruct('','ItemData')
+monocreatestruct('','Recipe')
+monocreatestruct('','Piece')
+monocreatestruct('','SharedData')
+monocreatestruct('','WearNTear')
+monocreatestruct('','ZNet')
+monocreatestruct('','Game')
+monocreatestruct('','Minimap')
+monocreatestruct('','ZNetScene')
+monocreatestruct('','ZoneSystem')
+monocreatestruct('','ZoneLocation')
+monocreatestruct('','PinData')
+monocreatestruct('','Food')
+monocreatestruct('','Fermenter')
+monocreatestruct('','GameCamera')
+monocreatestruct('','ShipControlls')
+monocreatestruct('','Ship')
+monocreatestruct('','TerrainModifier')
+monocreatestruct('','SE_Stats')
+monocreatestruct('','ObjectDB')
+--findAddress('m_maxCarryWeight',1,string.format('%X',findOpcodes('Player:.ctor',string.format('%08X',getAddress('Player.m_maxCarryWeight')),0x200)[1]-0x10))
+--writeFloat('m_maxCarryWeight',300000)
+--miMonoActivateClick(sender)
+
+defaultspeed={4,7,2}
+speedmultiplier=1
+jumpForce=1
+local m_maxCarryWeight,m_speed,m_runSpeed,m_swimSpeed,m_jumpForce,m_jumpForceForward,m_ghostMode=getAddress('Player.m_maxCarryWeight'),getAddress('Player.m_speed'),getAddress('Player.m_runSpeed'),getAddress('Player.m_swimSpeed'),getAddress('Player.m_jumpForce'),getAddress('Player.m_jumpForceForward'),getAddress('Player.m_ghostMode')
+freezingmultiplier = createTimer()
+freezingmultiplier.setInterval(1000)
+freezingmultiplier.OnTimer = function()
+  local Address=getAddressSafe('[LocalPlayer]')
+  if Address and Address~=0  then
+    local value=readFloat(Address+m_maxCarryWeight)
+    if value&lt;=400 then writeFloat(Address+m_maxCarryWeight,300000) end
+    writeFloat(Address+m_speed,speedmultiplier*defaultspeed[1])
+    writeFloat(Address+m_runSpeed,speedmultiplier*defaultspeed[2])
+    writeFloat(Address+m_swimSpeed,speedmultiplier*defaultspeed[3])
+    writeFloat(Address+m_jumpForce,jumpForce*8)
+    writeFloat(Address+m_jumpForceForward,jumpForce*2)
+    if not GhostMode then writeBytes(Address+m_ghostMode,0)
+    else writeBytes(Address+m_ghostMode,1)end
+  end
+end
+
+[DISABLE]
+freezingmultiplier.destroy()
+
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>316</ID>
+          <Description>"Speed Multiplier     Numpad 3:Activate &amp; Increase , Numpad 2:Deactivate"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+speedmulti=createHotkey(function() speedmultiplier=speedmultiplier+0.5 end,VK_NUMPAD3)
+[DISABLE]
+speedmulti.destroy()
+speedmultiplier=1
+</AssemblerScript>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Activate</Action>
+              <Keys>
+                <Key>99</Key>
+              </Keys>
+              <ID>0</ID>
+            </Hotkey>
+            <Hotkey>
+              <Action>Deactivate</Action>
+              <Keys>
+                <Key>98</Key>
+              </Keys>
+              <ID>1</ID>
+            </Hotkey>
+          </Hotkeys>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>317</ID>
+          <Description>"Jumpf Multiplier     Numpad 2:Activate &amp; Increase , Numpad 0:Deactivate"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+jumpForcemulti=createHotkey(function() jumpForce=jumpForce+0.5 end,VK_NUMPAD1)
+[DISABLE]
+jumpForcemulti.destroy()
+jumpForce=1
+</AssemblerScript>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Activate</Action>
+              <Keys>
+                <Key>97</Key>
+              </Keys>
+              <ID>0</ID>
+            </Hotkey>
+            <Hotkey>
+              <Action>Deactivate</Action>
+              <Keys>
+                <Key>96</Key>
+              </Keys>
+              <ID>1</ID>
+            </Hotkey>
+          </Hotkeys>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>6</ID>
+          <Description>"Skill Fast Leveling"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+local m_increseStep=getAddress('SkillDef.m_increseStep')
+[ENABLE]
+if not increseStep then increseStep={}end
+local list=getAddressSafe('[[[[LocalPlayer]+Player.m_skills]+Skills.m_skills]+10]')
+--if list then
+  for i=0,readInteger(list+0x18)-1 do
+    local pointer=readPointer(list+i*8+0x20)
+    local value=readFloat(pointer+m_increseStep)
+    increseStep[i+1]=value
+    writeFloat(pointer+m_increseStep,10000)
+  end
+--end
+
+[DISABLE]
+local list=getAddressSafe('[[[[LocalPlayer]+Player.m_skills]+Skills.m_skills]+10]')
+--if list then
+  for i=0,readInteger(list+0x18)-1 do
+    local pointer=readPointer(list+i*8+0x20)
+    writeFloat(pointer+m_increseStep,increseStep[i+1])
+  end
+--end
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>7</ID>
+          <Description>"Infinite Stamina"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Player:UseStamina,55)
+Player:UseStamina:
+ret
+
+ 
+ 
+[DISABLE]
+Player:UseStamina:
+db 55
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>35</ID>
+          <Description>"All Item IsTeleportable"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Inventory:IsTeleportable,55 48 8B EC)
+Inventory:IsTeleportable:
+mov al,01
+ret
+
+
+[DISABLE]
+Inventory:IsTeleportable:
+db 55 48 8B EC
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>30</ID>
+          <Description>"Fast Teleport"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('PlayerUpdateTeleport_alloc','PlayerUpdateTeleport_save','Player:UpdateTeleport',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(value)
+
+%s:
+newmem:
+movss xmm1,[value]
+%s
+jmp returnhere
+value:
+dd (float)100
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('PlayerUpdateTeleport_alloc','PlayerUpdateTeleport_save','Player:UpdateTeleport',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>314</ID>
+          <Description>"MinimapOnMapDoubleClick Teleport"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+
+[ENABLE]
+
+MinimapOnMapDblClick=string.format('%X',findOpcodes('Minimap:OnMapDblClick','lea rdx,%[rax]',0x100)[1])
+enablescript('MinimapOnMapDblClick_alloc','MinimapOnMapDblClick_save',MinimapOnMapDblClick,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(temp)
+
+%s:
+newmem:
+
+mov [temp],rcx
+mov [temp+8],rax
+mov [temp+10],r8
+mov [temp+18],r9
+mov rcx,LocalPlayer
+mov rcx,[rcx]
+test rcx,rcx
+je short @f
+
+mov r11,"UnityEngine:Component:get_transform"
+sub rsp,40
+call r11
+add rsp,40
+test rax,rax
+je short @f
+mov rcx,rax
+mov r11,"UnityEngine:Transform:get_rotation"
+sub rsp,40
+call r11
+add rsp,40
+test rax,rax
+je short @f
+mov r8,rax
+mov rcx,LocalPlayer
+mov rcx,[rcx]
+mov rdx,[temp+8]
+mov r9l,01
+sub rsp,40
+mov r11,"Player:TeleportTo"
+call r11
+add rsp,40
+mov rcx,rsi
+xor rdx,rdx
+sub rsp,40
+mov r11,"Minimap:SetMapMode"
+call r11
+add rsp,40
+
+
+@@:
+%s
+mov rcx,[temp]
+mov rax,[temp+8]
+mov r8,[temp+10]
+mov r9,[temp+18]
+jmp returnhere
+temp:
+dq 0 0 0 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('MinimapOnMapDblClick_alloc','MinimapOnMapDblClick_save',MinimapOnMapDblClick,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+MinimapOnMapDblClick=nil
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>22</ID>
+          <Description>"Unlimit Arrow"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+
+enablescript('InventoryRemoveItem2_alloc','InventoryRemoveItem2_save',mono_compile_methodS(mono_findMethodBySignature('Inventory','RemoveItem','ItemDrop/ItemData,int')),[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+//cmp r8,01
+//jne short @f
+mov al,01
+ret
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+enablescript('InventoryRemoveItem2_alloc','InventoryRemoveItem2_save',mono_compile_methodS(mono_findMethodBySignature('Inventory','RemoveItem','ItemDrop/ItemData,int')),[[
+%X:
+readmem(%s+1,%u)
+]],true)
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>443</ID>
+          <Description>"Food No Consumed"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Inventory:RemoveOneItem,55 48 8B EC)
+Inventory:RemoveOneItem:
+mov al,01
+ret
+
+
+[DISABLE]
+Inventory:RemoveOneItem:
+db 55 48 8B EC
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>442</ID>
+          <Description>"Doesn't Consume Material"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+local addres=mono_compile_methodS(mono_findMethodBySignature('Inventory','RemoveItem','string,int'))
+[ENABLE]
+local script=('assert(%s,55)\n%s:\nret'):format(addres,addres)
+AAscript(script)
+[DISABLE]
+AAscript(addres..':\ndb 55')
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>891</ID>
+          <Description>"GameCamera freeFly"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+[GameCamera]+GameCamera.m_freeFly:
+db 01
+ 
+[DISABLE]
+[GameCamera]+GameCamera.m_freeFly:
+db 0
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>191</ID>
+          <Description>"GhostMode (Stealth)"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+GhostMode=true
+ 
+[DISABLE]
+GhostMode=false
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>706</ID>
+          <Description>"Normal Mob Can't Sense Player"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(BaseAI:CanSenseTarget,55 48 8B EC)
+BaseAI:CanSenseTarget:
+mov al,0
+ret
+ 
+ 
+[DISABLE]
+BaseAI:CanSenseTarget:
+db 55 48 8B EC
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>309</ID>
+          <Description>"Gluttony"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Player:CanEat,55 48 8B EC)
+Player:CanEat:
+mov al,01
+ret
+
+{$lua}
+if syntaxcheck then return end
+
+if findOpcodes('Player:EatFood','03',0x300)[1] then
+writeBytes(findOpcodes('Player:EatFood','03',0x300)[1]+2,30)end
+
+--[[
+PlayerEatFood=string.format('%X',findOpcodes('Player:EatFood',string.format('+%X',getAddress('Food.m_item')),0x100)[1])
+local ext, opc, byt, add=splitDisassembledString(disassemble(PlayerEatFood))
+AAscript(PlayerEatFood..':\ndb '..string.rep('90 ',byt:gsub(' ',''):len()&gt;&gt;1))
+PlayerEatFoodSave=byt
+]]
+--[[
+PlayerUpdateFoodsub1=string.format('%X',findOpcodes('Player:UpdateFood','subsd',0x200)[1])
+PlayerUpdateFoodsub2=string.format('%X',findOpcodes('Player:UpdateFood','subsd',0x200)[2])
+local ext, opc, byt, add=splitDisassembledString(disassemble(PlayerUpdateFoodsub1))
+AAscript(PlayerUpdateFoodsub1..':\n'..opc:gsub('subsd','addsd'))
+local ext, opc, byt, add=splitDisassembledString(disassemble(PlayerUpdateFoodsub2))
+AAscript(PlayerUpdateFoodsub2..':\n'..opc:gsub('subsd','addsd'))
+]]
+
+PlayerUpdateFoodsub1=string.format('%X',findOpcodes('Player:UpdateFood','subsd',0x200)[1])
+PlayerUpdateFoodsub2=string.format('%X',findOpcodes('Player:UpdateFood','subsd',0x200)[2])
+PlayerUpdateFoodsubSave={}
+
+local ext, opc, byt, add=splitDisassembledString(disassemble(PlayerUpdateFoodsub1))
+PlayerUpdateFoodsubSave[1]=byt:gsub(' ','')
+AAscript(PlayerUpdateFoodsub1..':\ndb '..string.rep('90 ',byt:gsub(' ',''):len()&gt;&gt;1))
+
+local ext, opc, byt, add=splitDisassembledString(disassemble(PlayerUpdateFoodsub2))
+PlayerUpdateFoodsubSave[2]=byt:gsub(' ','')
+AAscript(PlayerUpdateFoodsub2..':\ndb '..string.rep('90 ',byt:gsub(' ',''):len()&gt;&gt;1))
+
+enablescript('PlayerUpdateFood_alloc','PlayerUpdateFood_save','Player:UpdateFood',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(HealthRegenFactor)
+registersymbol(HealthRegenFactor)
+
+%s:
+newmem:
+movss xmm1,[HealthRegenFactor]
+//xor r8,r8
+%s
+jmp returnhere
+HealthRegenFactor:
+dd (float)0.1
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+{$asm}
+ 
+[DISABLE]
+Player:CanEat:
+db 55 48 8B EC
+
+{$lua}
+if syntaxcheck then return end
+--[[
+local ext, opc, byt, add=splitDisassembledString(disassemble(PlayerUpdateFoodsub1))
+AAscript(PlayerUpdateFoodsub1..':\n'..opc:gsub('addsd','subsd'))
+local ext, opc, byt, add=splitDisassembledString(disassemble(PlayerUpdateFoodsub2))
+AAscript(PlayerUpdateFoodsub2..':\n'..opc:gsub('addsd','subsd'))]]
+--[[
+AAscript(PlayerEatFood..':\ndb '..PlayerEatFoodSave)
+PlayerEatFood=nil
+PlayerEatFoodSave=nil
+]]
+
+local char=PlayerUpdateFoodsubSave[1]
+local newchar=''
+for i=1,char:len()&gt;&gt;1 do newchar=newchar..char:sub(1,2)..' 'char=char:sub(3,char:len())end
+AAscript(PlayerUpdateFoodsub1..':\ndb '..newchar)
+local char=PlayerUpdateFoodsubSave[2]
+local newchar=''
+for i=1,char:len()&gt;&gt;1 do newchar=newchar..char:sub(1,2)..' 'char=char:sub(3,char:len())end
+AAscript(PlayerUpdateFoodsub2..':\ndb '..newchar)
+
+PlayerUpdateFoodsub1=nil
+PlayerUpdateFoodsub2=nil
+PlayerUpdateFoodsubSave=nil
+
+enablescript('PlayerUpdateFood_alloc','PlayerUpdateFood_save','Player:UpdateFood',[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(HealthRegenFactor)
+]],true)
+{$asm}
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>315</ID>
+              <Description>"HealthRegenFactor"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>HealthRegenFactor</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>311</ID>
+          <Description>"CheatsIsEnabled ( Z:DebugFly B:FreeCraft K:Kill All ) (Unlock Console Features)"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Console:IsCheatsEnabled,55 48 8B EC)
+assert(GoogleAnalyticsV4:LogEvent,55)
+Console:IsCheatsEnabled:
+mov al,01
+ret
+m_debugMode:
+db 01
+GoogleAnalyticsV4:LogEvent:
+ret
+{$lua}
+if syntaxchek then return end
+local address=string.format('%X',findOpcodes('Console:InputText',string.format('%X',getAddress('m_isServer')),0x5000)[1])
+ConsoleInputTextisServer=string.format('%X',findOpcodes(address,'je',0x50)[1])
+ConsoleInputTextisServerBytes=readBytes(ConsoleInputTextisServer,getInstructionSize(ConsoleInputTextisServer),true)
+return ConsoleInputTextisServer..':\ndb '..string.rep('90 ',getInstructionSize(ConsoleInputTextisServer))
+{$asm}
+
+
+[DISABLE]
+Console:IsCheatsEnabled:
+db 55 48 8B EC
+m_debugMode:
+db 0
+GoogleAnalyticsV4:LogEvent:
+db 55
+{$lua}
+if syntaxchek then return end
+writeBytes(ConsoleInputTextisServer,ConsoleInputTextisServerBytes)
+ConsoleInputTextisServer=nil
+ConsoleInputTextisServerBytes=nil
+{$asm}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2273</ID>
+          <Description>"Force ItemDrop level"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+CharacterDropGenerateDropList=string.format('%X',findOpcodes('CharacterDrop:GenerateDropList',string.format('%X',getAddress('Player.m_level')),0x1000)[1])
+enablescript('CharacterDropGenerateDropList_alloc','CharacterDropGenerateDropList_save',CharacterDropGenerateDropList,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(m_level)
+registersymbol(m_level)
+%s:
+newmem:
+%s
+mov eax,[m_level]
+jmp returnhere
+m_level:
+dq 1
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('CharacterDropGenerateDropList_alloc','CharacterDropGenerateDropList_save',CharacterDropGenerateDropList,[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(m_level)
+]],true)
+CharacterDropGenerateDropList=nil
+
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>2371</ID>
+              <Description>"level"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>m_level</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>159</ID>
+          <Description>"Recipe no requirement"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('PlayerHaveRequirements2_alloc','PlayerHaveRequirements2_save',string.format('%X',mono_compile_method(mono_findMethods('Player','HaveRequirements')[2])),[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+test rdx,rdx
+je short @f
+mov byte ptr[rdx+Piece.m_enabled],01
+@@:
+mov al,01
+ret
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+enablescript('PlayerHaveRequirements3_alloc','PlayerHaveRequirements3_save',string.format('%X',mono_compile_method(mono_findMethods('Player','HaveRequirements')[3])),[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+test rdx,rdx
+je short @f
+mov byte ptr[rdx+Recipe.m_enabled],01
+@@:
+mov al,01
+ret
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+enablescript('DLCManIsDLCInstalled_alloc','DLCManIsDLCInstalled_save','DLCMan:IsDLCInstalled',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+mov al,01
+ret
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('PlayerHaveRequirements2_alloc','PlayerHaveRequirements2_save',string.format('%X',mono_compile_method(mono_findMethods('Player','HaveRequirements')[2])),[[
+%X:
+readmem(%s+1,%u)
+]],true)
+
+enablescript('PlayerHaveRequirements3_alloc','PlayerHaveRequirements3_save',string.format('%X',mono_compile_method(mono_findMethods('Player','HaveRequirements')[3])),[[
+%X:
+readmem(%s+1,%u)
+]],true)
+
+enablescript('DLCManIsDLCInstalled_alloc','DLCManIsDLCInstalled_save','DLCMan:IsDLCInstalled',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2440</ID>
+          <Description>"Item Max Durability"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('ItemDataGetMaxDurability_alloc','ItemDataGetMaxDurability_save','ItemData:GetMaxDurability',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(temp)
+label(code)
+%s:
+newmem:
+test rcx,rcx
+je short @f
+mov rax,[rsp]
+mov [temp],rax
+mov [temp+8],rcx
+mov rax,code
+mov [rsp],rax
+@@:
+%s
+jmp returnhere
+code:
+mov rcx,[temp+8]
+comiss xmm0,[temp+10]
+je short @f
+movss [rcx+ItemData.m_durability],xmm0
+@@:
+mov rcx,[temp]
+jmp rcx
+temp:
+dq 0 0 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('ItemDataGetMaxDurability_alloc','ItemDataGetMaxDurability_save','ItemData:GetMaxDurability',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2437</ID>
+          <Description>"Bow Instant Draw"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('AttackStartDraw_alloc','AttackStartDraw_save','Attack:StartDraw',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+test rdx,rdx
+je short @f
+mov rax,LocalPlayer
+mov rax,[rax]
+cmp rax,rdx
+jne short @f
+mov [rdx+Player.m_attackDrawTime],(float)100
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('AttackStartDraw_alloc','AttackStartDraw_save','Attack:StartDraw',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>893</ID>
+          <Description>"No Fall Damage"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('CharacterDamage_alloc','CharacterDamage_save','Character:Damage',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+mov rax,"Character:UpdateGroundContact"
+cmp [rsp],rax
+jl short @f
+add rax,1000
+cmp [rsp],rax
+jnl short @f
+ret
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('CharacterDamage_alloc','CharacterDamage_save','Character:Damage',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2376</ID>
+          <Description>"Infinite Jump"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+CharacterJump=string.format('%X',findOpcodes('Character:Jump','test eax,eax',0x100)[1])
+unregisterSymbol('CharactertoJump')
+registerSymbol('CharactertoJump',string.format('%X',findOpcodes('Character:Jump','xorpd xmm0,xmm0',0x1000)[1]))
+
+enablescript('CharacterJump_alloc','CharacterJump_save',CharacterJump,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+jmp CharactertoJump
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('CharacterJump_alloc','CharacterJump_save',CharacterJump,[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(CharactertoJump)
+]],true)
+CharacterJump=nil
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2375</ID>
+          <Description>"Neither PrivateArea nor NoBuildLocation"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+
+assert(PrivateArea:CheckAccess,55 48 8B EC)
+assert(Location:IsInsideNoBuildLocation,55 48 8B EC)
+PrivateArea:CheckAccess:
+mov al,01
+ret
+Location:IsInsideNoBuildLocation:
+xor rax,rax
+ret
+ 
+
+[DISABLE]
+PrivateArea:CheckAccess:
+db 55 48 8B EC
+Location:IsInsideNoBuildLocation:
+db 55 48 8B EC
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2436</ID>
+          <Description>"No Damage"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('CharacterApplyDamage_alloc','CharacterApplyDamage_save','Character:ApplyDamage',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+mov rax,LocalPlayer
+mov rax,[rax]
+cmp rax,rcx
+jne short @f
+ret
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('CharacterApplyDamage_alloc','CharacterApplyDamage_save','Character:ApplyDamage',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2327</ID>
+          <Description>"Neither Death Penalty nor Tombstone"</Description>
+          <LastState Activated="1"/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(PlayerProfile:SetDeathPoint,55)
+assert(Player:CreateTombStone,55)
+assert(Skills:OnDeath,55)
+PlayerProfile:SetDeathPoint:
+ret
+Player:CreateTombStone:
+ret
+Skills:OnDeath:
+ret
+ 
+[DISABLE]
+PlayerProfile:SetDeathPoint:
+db 55
+Player:CreateTombStone:
+db 55
+Skills:OnDeath:
+db 55
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2735</ID>
+          <Description>"Guardian Power"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+local list=getAddress('[[[ObjectDB]+ObjectDB.m_StatusEffects]+10]')
+local m_name=getAddress('SE_Stats.m_name')
+local gpower={'bonemass','eikthyr','moder','theelder','yagluth'}
+local str=''
+for i=0,readInteger(list+0x18)-1 do
+  local pointer=readPointer(list+i*8+0x20)
+  local name=readPointer(pointer+m_name)
+  local len=readInteger(name+0x10)
+  name=readString(name+0x14,len*2,true):gsub('$se_',''):gsub('_name','')
+  --for j=1,#gpower do
+    --if name==gpower[j] then
+    str=str..string.format('%016X:%s\n',pointer,name)
+    --break end
+  --end
+end
+
+local rec,tec
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('m_guardianSE')
+rec.setAddress('[LocalPlayer]+Player.m_guardianSE')
+rec.VarType='vtQword'
+rec.DropDownList.Text=str
+rec.DropDownDescriptionOnly=true
+rec.DisplayAsDropDownListItem=true
+rec.appendToEntry(memrec)
+rec.DontSave=true
+rec.ShowAsHex=true
+
+tec = getAddressList().createMemoryRecord()
+tec.setDescription('m_ttl')
+tec.setAddress('+0')
+tec.VarType='vtSingle'
+tec.OffsetCount=1
+tec.OffsetText[0]='SE_Stats.m_ttl'
+tec.appendToEntry(rec)
+tec.DontSave=true
+
+tec = getAddressList().createMemoryRecord()
+tec.setDescription('m_cooldown')
+tec.setAddress('+0')
+tec.VarType='vtSingle'
+tec.OffsetCount=1
+tec.OffsetText[0]='SE_Stats.m_cooldown'
+tec.appendToEntry(rec)
+tec.DontSave=true
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('m_guardianPowerCooldown')
+rec.setAddress('[LocalPlayer]+Player.m_guardianPowerCooldown')
+rec.VarType='vtSingle'
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+
+
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+          <CheatEntries/>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1395</ID>
+          <Description>"Wind Direction Follow Player"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('EnvManGetWindDir_alloc','EnvManGetWindDir_save','EnvMan:GetWindDir',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(temp)
+label(code)
+
+%s:
+newmem:
+mov rax,[rsp]
+mov [temp],rax
+mov rax,code
+mov [rsp],rax
+@@:
+%s
+jmp returnhere
+code:
+mov [temp+8],rax
+mov rcx,LocalPlayer
+mov rcx,[rcx]
+test rcx,rcx
+je short @f
+//mov rcx,[rcx+Player.m_body]
+//test rcx,rcx
+//je @f
+//mov rcx,[rcx+Player.m_shipControl]
+//test rcx,rcx
+//je  @f
+//mov rcx,[rcx+ShipControlls.m_ship]
+//test rcx,rcx
+//je @f
+mov r11,"UnityEngine:Component:get_transform"
+sub rsp,40
+call r11
+add rsp,40
+test rax,rax
+je short @f
+mov rcx,rax
+mov r11,"UnityEngine:Transform:get_forward"
+sub rsp,40
+call r11
+add rsp,40
+test rax,rax
+je short @f
+mov rcx,rax
+mov rax,[temp+8]
+mov rdx,[rcx]
+mov [rax],rdx
+mov edx,[rcx+8]
+mov [rax+8],edx
+mov rcx,[temp]
+jmp rcx
+@@:
+mov rax,[temp+8]
+mov rcx,[temp]
+jmp rcx
+temp:
+dq 0 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('EnvManGetWindDir_alloc','EnvManGetWindDir_save','EnvMan:GetWindDir',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2435</ID>
+          <Description>"m_playerPos (Read_Only)"</Description>
+          <LastState Value="" RealAddress="265C950F700"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <GroupHeader>1</GroupHeader>
+          <Address>[GameCamera]</Address>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>2434</ID>
+              <Description>"X"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+GameCamera.m_playerPos</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>2433</ID>
+              <Description>"Y (Height)"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+GameCamera.m_playerPos+4</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>2432</ID>
+              <Description>"Z"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+GameCamera.m_playerPos+8</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1467</ID>
+          <Description>"WaterLevel (Depend on netview.owner)"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('WaterVolumeGetWaterLevel_alloc','WaterVolumeGetWaterLevel_save','WaterVolume:GetWaterLevel',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(WaterLevel)
+registersymbol(WaterLevel)
+label(exit)
+label(temp)
+%s:
+newmem:
+mov rax,"GameCamera:GetCameraPosition"
+cmp [rsp],rax
+jl short exit
+add rax,4000
+cmp [rsp],rax
+jnl short exit
+movss xmm1,[temp]
+comiss xmm1,[WaterLevel]
+jae short exit
+%s
+jmp returnhere
+exit:
+movss xmm0,[WaterLevel]
+ret
+WaterLevel:
+dd (float)30 0
+temp:
+dd (float)40
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+--[==[
+enablescript('ShipApplyMovementControlls_alloc','ShipApplyMovementControlls_save',indexdism('Ship:ApplyMovementControlls')[7].add,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+%s
+test rcx,rcx
+je short @f
+mov rax,[rcx+Ship.m_nview]
+sub rsp,10
+mov r11,"ZNetView:ClaimOwnership"
+call r11
+add rsp,10
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+]==]
+[DISABLE]
+
+enablescript('WaterVolumeGetWaterLevel_alloc','WaterVolumeGetWaterLevel_save','WaterVolume:GetWaterLevel',[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(WaterLevel)
+]],true)
+
+--[==[
+enablescript('ShipApplyMovementControlls_alloc','ShipApplyMovementControlls_save',indexdism('Ship:ApplyMovementControlls')[7].add,[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(WaterLevel)
+]],true)]==]
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>1468</ID>
+              <Description>"WaterLevel  Q: Increase, X: Decrease"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>WaterLevel</Address>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Increase Value</Action>
+                  <Keys>
+                    <Key>81</Key>
+                  </Keys>
+                  <Value>5</Value>
+                  <ID>0</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Decrease Value</Action>
+                  <Keys>
+                    <Key>88</Key>
+                  </Keys>
+                  <Value>10</Value>
+                  <ID>1</ID>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>1298</ID>
+              <Description>"m_disableLevel"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>[[[LocalPlayer]+Player.m_shipControl]+ShipControlls.m_ship]+A4</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>1299</ID>
+              <Description>"m_sailForceOffset"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>[[[LocalPlayer]+Player.m_shipControl]+ShipControlls.m_ship]+A8</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>1300</ID>
+              <Description>"m_sailForceFactor"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>[[[LocalPlayer]+Player.m_shipControl]+ShipControlls.m_ship]+AC</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>1457</ID>
+          <Description>"Ship No WaterForce&amp;UpsideDmg"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Ship:UpdateWaterForce,55)
+assert(Ship:UpdateUpsideDmg,55)
+Ship:UpdateWaterForce:
+db C3
+
+Ship:UpdateWaterForce:
+db C3
+ 
+[DISABLE]
+Ship:UpdateWaterForce:
+db 55
+Ship:UpdateUpsideDmg:
+db 55
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>452</ID>
+          <Description>"Fermenter Status Ready"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(Fermenter:GetStatus,55 48 8B EC)
+Fermenter:GetStatus:
+mov al,03
+ret
+ 
+ 
+[DISABLE]
+Fermenter:GetStatus:
+db 55 48 8B EC
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>451</ID>
+          <Description>"Instant Fermentation Time "</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('FermenterGetFermentationTime_alloc','FermenterGetFermentationTime_save','Fermenter:GetFermentationTime',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+test rcx,rcx
+je short @f
+movss xmm0,[rcx+Fermenter.m_fermentationDuration]
+addss xmm0,xmm0
+cvtss2sd xmm0,xmm0
+ret
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('FermenterGetFermentationTime_alloc','FermenterGetFermentationTime_save','Fermenter:GetFermentationTime',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>313</ID>
+          <Description>"Don't ShowPointOnMap"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(MiniMap:ShowPointOnMap,55)
+Minimap:ShowPointOnMap:
+ret
+[DISABLE]
+Minimap:ShowPointOnMap:
+db 55
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>465</ID>
+          <Description>"DiscoverClosestLocation"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+
+
+[ENABLE]
+local locationlist=''
+local list,pointer,pointers,name,len=getAddress('[[[ZoneSystem]+ZoneSystem.m_locations]+10]')
+local m_prefabName=getAddress('ZoneLocation.m_prefabName')
+for i=0,readInteger(list+0x18)-1 do
+  pointer=readPointer(list+i*8+0x20)
+  pointers=readPointer(pointer+m_prefabName)
+  len=readInteger(pointers+0x10)
+  name=readString(pointers+0x14,len*2,true)
+  locationlist=locationlist..string.format('%016X:%s\n',pointers,name)
+end
+--print(locationlist)
+
+enablescript('GameUpdate_alloc','GameUpdate_save',indexdism('Game:Update')[4].add,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(temp)
+label(location)
+registersymbol(location)
+
+%s:
+newmem:
+mov [temp],rcx
+test rcx,rcx
+je short @f
+cmp byte ptr[location+10],01
+jne short @f
+mov rdx,[location]
+test rdx,rdx
+je short @f
+mov r8,GameCamera
+mov r8,[r8]
+test r8,r8
+je short @f
+lea r8,[r8+GameCamera.m_playerPos]
+mov r9,[location]
+sub rsp,40
+mov rax,[location+8]
+mov [rsp+20],rax
+mov r11,"Game:DiscoverClosestLocation"
+call r11
+add rsp,40
+mov byte ptr[location+10],0
+@@:
+mov rcx,[temp]
+%s
+jmp returnhere
+location:
+dq 0 0 0 0 0
+temp:
+dq 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+local rec
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('Location')
+rec.setAddress('location')
+rec.VarType='vtQword'
+rec.DropDownList.Text=locationlist
+rec.DropDownDescriptionOnly=true
+rec.DisplayAsDropDownListItem=true
+rec.appendToEntry(memrec)
+rec.DontSave=true
+rec.ShowAsHex=true
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('Pintype')
+rec.setAddress('location+8')
+rec.VarType='vtQword'
+rec.DropDownList.Text='0:Icon0\n1:Icon1\n2:Icon2\n3:Icon3\n4:Death\n5:Bed\n6:Icon4\n7:Shout\n8:None\n9:Boss\n10:Player\n11:RandomEvent\n12:Ping\n13:EventArea'
+rec.DropDownDescriptionOnly=true
+rec.DisplayAsDropDownListItem=true
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('Active')
+rec.setAddress('location+10')
+rec.VarType='vtQword'
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('&lt;---- Discover')
+rec.VarType='vtAutoAssembler'
+rec.Script='[Enable]\nlocation+10:\ndb 01\n[Disable]'
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+writePointer('location',getAddress(locationlist:sub(1,string.find(locationlist,':')-1)))
+writeInteger('location+8',8)
+
+[DISABLE]
+
+enablescript('GameUpdate_alloc','GameUpdate_save',indexdism('Game:Update')[4].add,[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(location)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>304</ID>
+          <Description>"DiscoverLocation (Edit the script if you want more location (notlist) )  (Only work for host)"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+
+[ENABLE]
+
+local temp={}
+local Eikthyrnir,GoblinKing,GDKing,Bonemass,Dragonqueen
+local dict=getAddress('[[ZoneSystem]+ZoneSystem.m_locationInstances]')
+local list={'camp','Camp','Crypt','Well','Cave','Drake','Stone'}
+local notlist={'camp','Camp','Crypt','Well','Cave','Drake','Stone','ShipSetting','Dolmen','Ruin','FireHole','Meteorite','InfestedTree','Wood','StoneCircle','ShipWreck','Waymarker','Grave','House','Tower','Hut','Cabin','Runestone'}
+for i=0,readInteger(dict+0x40)-1 do
+  local pointer=readPointer(readPointer(dict+0x18)+i*0x28+0x30)
+  local name=readPointer(pointer+getAddress('ZoneLocation.m_prefabName'))
+  if name then
+    name=readString(name+0x14,readInteger(name+0x10)*2,true)
+    local isnotlist=false
+
+    for j=1,#notlist do
+      if string.find(name,notlist[j])then isnotlist=true break end
+    end
+
+    if not isnotlist then
+    --print(name)
+    --print(string.format('%X : ',pointer)..name)
+      if name=='Eikthyrnir' then Eikthyrnir=string.format('%X',readPointer(pointer+0x10))
+      elseif name=='GoblinKing' then GoblinKing=string.format('%X',readPointer(pointer+0x10))
+      elseif name=='GDKing' then GDKing=string.format('%X',readPointer(pointer+0x10))
+      elseif name=='Bonemass' then Bonemass=string.format('%X',readPointer(pointer+0x10))
+      elseif name=='Dragonqueen' then Dragonqueen=string.format('%X',readPointer(pointer+0x10))end
+      temp[#temp+1]=i
+    end
+  end
+end
+
+MinimapAddPin=string.format('%X',findOpcodes('Minimap:AddPin','call',0x100)[3]+3)
+enablescript('MinimapAddPin_alloc','MinimapAddPin_save',MinimapAddPin,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(temp)
+
+%s:
+newmem:
+%s
+mov [temp],rdx
+mov [temp+8],rax
+mov rcx,r13
+mov rdx,r15
+sub rsp,40
+mov r11,"Minimap:GetLocationIcon"
+call r11
+add rsp,40
+test rax,rax
+je short @f
+mov rdx,rax
+mov rax,[temp+8]
+mov byte ptr[rax+PinData.m_doubleSize],01
+mov dword ptr[rax+PinData.m_type],8
+jmp returnhere
+@@:
+mov rdx,[temp]
+mov rax,[temp+8]
+cmp dword ptr[rax+PinData.m_type],9
+jne short @f
+mov byte ptr[rax+PinData.m_doubleSize],01
+@@:
+jmp returnhere
+temp:
+dq 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+local banana=allocateMemory(0x5000)
+unregisterSymbol('banana')
+registerSymbol('banana',banana)
+writeInteger(banana,#temp)
+for i=1,#temp do
+  writeInteger(banana+i*4,temp[i])
+end
+print(#temp)
+
+MiniMapUpdate= string.format('%X',findOpcodes('MiniMap:Update','rcx',0x100)[1])
+local script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(count)
+registersymbol(count)
+label(exit)
+label(exit2)
+%s:
+newmem:
+%s
+test rcx,rcx
+je exit
+mov rax,ZoneSystem
+mov rax,[rax]
+test rax,rax
+je exit
+mov rax,[rax+ZoneSystem.m_locationInstances]
+test rax,rax
+je exit
+mov r9,banana
+mov r8,[count]
+cmp r8d,[r9]
+jnl exit
+imul r8,r8,4
+mov r8d,[r9+r8+4]
+xor r9,r9
+mov r9d,r8d
+cmp r9d,[rax+40]
+jnl exit
+mov rax,[rax+18]
+imul r9,r9,28
+lea rdx,[rax+r9+38]
+mov rax,[rax+r9+30]
+inc [count]
+mov r9,[rax+ZoneLocation.m_prefabName]
+mov rax,Eikthyrnir
+cmp r9,rax
+je short @f
+mov rax,GoblinKing
+cmp r9,rax
+je short @f
+mov rax,GDKing
+cmp r9,rax
+je short @f
+mov rax,Bonemass
+cmp r9,rax
+je short @f
+mov rax,Dragonqueen
+cmp r9,rax
+je short @f
+mov r8,7
+jmp short exit2
+@@:
+mov r8,9
+exit2:
+sub rsp,40
+mov r11,"MiniMap:DiscoverLocation"
+call r11
+add rsp,40
+exit:
+jmp returnhere
+count:
+dq 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):gsub('Eikthyrnir',Eikthyrnir):gsub('GoblinKing',GoblinKing):gsub('GDKing',GDKing):gsub('Bonemass',Bonemass):gsub('Dragonqueen',Dragonqueen)
+enablescript('MiniMapUpdate_alloc','MiniMapUpdate_save',MiniMapUpdate,script)
+
+
+
+
+[DISABLE]
+enablescript('MinimapAddPin_alloc','MinimapAddPin_save',MinimapAddPin,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+MinimapAddPin=nil
+
+enablescript('MiniMapUpdate_alloc','MiniMapUpdate_save',MiniMapUpdate,[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(count)
+]],true)
+MiniMapUpdate=nil
+
+deAlloc('banana')
+unregisterSymbol('banana')
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>305</ID>
+              <Description>"counter"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>count</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>716</ID>
+          <Description>"Spawn Object"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+
+[ENABLE]
+local list=getAddress('[[[ZNetScene]+ZNetScene.m_prefabs]+10]')
+local ZNetScene=getAddress('[ZNetScene]')
+ZNetSceneGetPrefabHash=string.format('%X',findOpcodes('ZNetScene:GetPrefabHash','call',0x100)[1])
+enablescript('ZNetSceneGetPrefabHash_alloc','ZNetSceneGetPrefabHash_save',ZNetSceneGetPrefabHash,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(prefabName)
+registersymbol(prefabName)
+
+%s:
+newmem:
+%s
+mov [prefabName],rax
+jmp returnhere
+prefabName:
+dq 0 0 0 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+prefablist=''
+local prefabName,pointer,j,pointers,len,name=getAddress('prefabName')
+for i=0,readInteger(list+0x18)-1 do
+  pointer=readPointer(list+i*8+0x20)
+  if pointer and pointer~=0 then
+    writePointer(prefabName,0)
+    mono_invoke_method(mono_enumDomains()[1],mono_findMethod('','ZNetScene', 'GetPrefabHash'), ZNetScene,{{type=vtPointer,value=pointer}})
+    j=0
+    while(true)do
+      if readPointer(prefabName)~=0 then break end
+      if j&gt;5000 then break end
+      j=j+1
+    end
+    pointers=readPointer(prefabName)
+    len=readInteger(pointers+0x10)
+    if len then
+      name=readString(pointers+0x14,len*2,true)
+      prefablist=prefablist..string.format('%016X:%s\n',pointer,name)
+    end
+  end
+end
+
+enablescript('ZNetSceneGetPrefabHash_alloc','ZNetSceneGetPrefabHash_save',ZNetSceneGetPrefabHash,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+ZNetSceneGetPrefabHash=nil
+--print(locationlist)
+-- 0 4 8 C 10 14 18 1C 20
+enablescript('ZNetSceneUpdate_alloc','ZNetSceneUpdate_save',indexdism('ZNetScene:Update')[4].add,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(temp)
+label(prefab)
+registersymbol(prefab)
+label(exit)
+%s:
+newmem:
+mov [temp],rcx
+test rcx,rcx
+je exit
+cmp byte ptr[prefab+8],01
+jne exit
+mov rcx,GameCamera
+mov rcx,[rcx]
+mov r11,"UnityEngine:Component:get_transform"
+sub rsp,40
+call r11
+add rsp,40
+mov rcx,rax
+mov r11,"UnityEngine:Transform:get_position"
+sub rsp,40
+call r11
+add rsp,40
+mov rdx,[prefab+10]
+test rdx,rdx
+jne short @f
+mov rdx,rax
+@@:
+mov r8,[prefab+18]
+test r8,r8
+jne short @f
+mov r8,rax
+@@:
+mov rcx,[temp]
+mov r9,[prefab]
+test r9,r9
+je short exit
+sub rsp,40
+mov r11,"ZNetScene:SpawnObject"
+call r11
+add rsp,40
+mov byte ptr[prefab+8],0
+exit:
+mov rcx,[temp]
+%s
+jmp returnhere
+prefab:
+dq 0 0 0 0 0 0 0
+temp:
+dq 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+local rec,tec
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('Object')
+rec.setAddress('prefab')
+rec.VarType='vtQword'
+rec.DropDownList.Text=prefablist
+rec.DropDownDescriptionOnly=true
+rec.DisplayAsDropDownListItem=true
+rec.appendToEntry(memrec)
+rec.DontSave=true
+rec.ShowAsHex=true
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('Active')
+rec.setAddress('prefab+8')
+rec.VarType='vtByte'
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('Position')
+rec.setAddress('prefab+10')
+rec.VarType='vtQword'
+rec.ShowAsHex=true
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+local pos={'X','Y','Z'}
+for i=1,#pos do
+  tec = getAddressList().createMemoryRecord()
+  tec.setDescription(pos[i])
+  tec.setAddress('+0')
+  tec.VarType='vtSingle'
+  tec.OffsetCount=1
+  tec.Offset[0]=(i-1)*4
+  tec.appendToEntry(rec)
+  tec.DontSave=true
+end
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('Rotation')
+rec.setAddress('prefab+18')
+rec.VarType='vtQword'
+rec.ShowAsHex=true
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+local pos={'X','Y','Z','W'}
+for i=1,#pos do
+  tec = getAddressList().createMemoryRecord()
+  tec.setDescription(pos[i])
+  tec.setAddress('+0')
+  tec.VarType='vtSingle'
+  tec.OffsetCount=1
+  tec.Offset[0]=(i-1)*4
+  tec.appendToEntry(rec)
+  tec.DontSave=true
+end
+
+
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('&lt;---- Spawn')
+rec.VarType='vtAutoAssembler'
+rec.Script='[Enable]\nprefab+8:\ndb 01\n[Disable]'
+rec.appendToEntry(memrec)
+rec.DontSave=true
+
+writePointer('prefab',getAddress(prefablist:sub(1,string.find(prefablist,':')-1)))
+
+
+function spawnObject(name,count)
+  local list=createStringlist()
+  list.Text=prefablist
+  local id
+  for i=0,list.Count-1 do
+    local objname=list[i]:sub(string.find(list[i],':')+1,list[i]:len())
+    if objname==name then id=list[i]:sub(1,string.find(list[i],':')-1) break end
+  end
+  if not id then return end
+  list:Destroy()
+  for j=1,count do
+    local i=0
+    while(i&lt;1000)do
+      if readInteger('prefab+8')==0 then break end
+      sleep(1)
+      i=i+1
+    end
+    writePointer('prefab',tonumber(id,16))
+    writeInteger('prefab+8',1)
+  end
+end
+[DISABLE]
+
+enablescript('ZNetSceneUpdate_alloc','ZNetSceneUpdate_save',indexdism('ZNetScene:Update')[4].add,[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(prefab)
+]],true)
+
+spawnObject=nil
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2441</ID>
+          <Description>"Dark Spawn"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript Async="1">{$lua}
+if syntaxcheck then return end
+
+[ENABLE]
+if not spawnObject then showMessage('Need to activate Spawn Object script, first!')end
+
+spawnObject('Boar',5)
+spawnObject('Neck',5)
+spawnObject('Greyling',5)
+spawnObject('Greydwarf',5)
+spawnObject('Greydwarf_Elite',5)
+spawnObject('Greydwarf_Shaman',5)
+spawnObject('Troll',5)
+spawnObject('Ghost',5)
+spawnObject('Skeleton',5)
+spawnObject('Skeleton_Poison',5)
+spawnObject('Blob',5)
+spawnObject('BlobElite',5)
+spawnObject('Draugr',5)
+spawnObject('Draugr_Elite',5)
+spawnObject('Draugr_Ranged',5)
+spawnObject('Leech',5)
+spawnObject('Surtling',5)
+spawnObject('Wraith',5)
+spawnObject('Wolf',5)
+spawnObject('Hatchling',5)
+spawnObject('StoneGolem',5)
+spawnObject('Fenring',5)
+spawnObject('Deathsquito',5)
+spawnObject('Lox',5)
+spawnObject('Goblin',5)
+spawnObject('GoblinArcher',5)
+spawnObject('GoblinBrute',5)
+spawnObject('GoblinShaman',5)
+spawnObject('Serpent',5)
+
+spawnObject('Eikthyr',3)
+spawnObject('gd_king',3)
+spawnObject('Bonemass',3)
+spawnObject('Dragon',3)
+spawnObject('GoblinKing',3)
+[DISABLE]
+
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>296</ID>
+          <Description>"Build Anywhere"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('PieceSetInvalidPlacementHeightlight_alloc','PieceSetInvalidPlacementHeightlight_save','Piece:SetInvalidPlacementHeightlight',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+xor rdx,rdx
+test rdi,rdi
+je short @f
+mov byte ptr[rdi+Player.m_placementStatus],0
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+PlayerRemovePiece={}
+local tojump=indexdism(findOpcodes('Player:RemovePiece',string.format('%08X',getAddress('Piece.m_canBeRemoved')),0x1000)[1])[2].add
+local jumpto=indexdism(findOpcodes('Player:RemovePiece','jmp',0x1000)[4])[2].add
+PlayerRemovePiece.byt=readBytes(tojump,6,true)
+PlayerRemovePiece.add=tojump
+local script=tojump..':\njmp '..jumpto
+local success,erro=autoAssembleCheck(script)
+if not success then print('\n'..erro..'\n')
+  local scriptstr=createStringlist()scriptstr.Text=script
+  for j=0,scriptstr.Count-1 do print(string.format('%u\t%s',j+1,scriptstr[j])) end
+  error('autoAssemble failed')
+end
+autoAssemble(script)
+
+[DISABLE]
+
+enablescript('PieceSetInvalidPlacementHeightlight_alloc','PieceSetInvalidPlacementHeightlight_save','Piece:SetInvalidPlacementHeightlight',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+
+writeBytes(PlayerRemovePiece.add,PlayerRemovePiece.byt)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>167</ID>
+          <Description>"Your Building UnDamageAble"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+enablescript('WearNTearApplyDamage_alloc','WearNTearApplyDamage_save',indexdism('WearNTear:ApplyDamage')[4].add,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+%s
+test rcx,rcx
+je short @f
+mov rcx,[rcx+WearNTear.m_nview]
+test rcx,rcx
+je short @f
+sub rsp,10
+mov r11,"ZNetView:IsOwner"
+call r11
+add rsp,10
+test rax,rax
+je short @f
+mov rsi,[rbp-08]
+lea rsp,[rbp+00]
+pop rbp
+ret
+@@:
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('WearNTearApplyDamage_alloc','WearNTearApplyDamage_save',indexdism('WearNTear:ApplyDamage')[4].add,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>166</ID>
+          <Description>"All Building UnDamageAble"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+assert(WearNTear:ApplyDamage,55 48 8B EC)
+WearNTear:ApplyDamage:
+mov al,01
+ret
+
+ 
+ 
+[DISABLE]
+WearNTear:ApplyDamage:
+db 55 48 8B EC
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>165</ID>
+          <Description>"Your Building Auto Repair"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+if not WearNTearUpdateWear then WearNTearUpdateWear=string.format('%X',findOpcodes('WearNTear:UpdateWear','call',0x100)[2])end
+[ENABLE]
+enablescript('WearNTearUpdateWear_alloc','WearNTearUpdateWear_save',WearNTearUpdateWear,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+test rax,rax
+je short @f
+sub rsp,10
+mov rcx,rsi
+mov r11,"WearNTear:Repair"
+add rsp,10
+mov al,01
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('WearNTearUpdateWear_alloc','WearNTearUpdateWear_save',WearNTearUpdateWear,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+WearNTearUpdateWear=nil
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>454</ID>
+          <Description>"Repair Building to Huge Health"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+
+if not WearNTearRepair then WearNTearRepair=string.format('%X',findOpcodes('WearNTear:Repair','call',0x100)[2])end
+[ENABLE]
+enablescript('WearNTearRepair_alloc','WearNTearRepair_save','WearNTear:Repair',[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+test rcx,rcx
+je short @f
+mov [rcx+WearNTear.m_health],0
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+
+enablescript('WearNTearRepair2_alloc','WearNTearRepair2_save',WearNTearRepair,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+%s:
+newmem:
+test rsi,rsi
+je short @f
+mov [rsi+WearNTear.m_health],(float)3.402823466E38
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+enablescript('WearNTearRepair_alloc','WearNTearRepair_save','WearNTear:Repair',[[
+%X:
+readmem(%s+1,%u)
+]],true)
+
+
+enablescript('WearNTearRepair2_alloc','WearNTearRepair2_save',WearNTearRepair,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+WearNTearRepair=nil
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>189</ID>
+          <Description>"DebugFly"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+[LocalPlayer]+Player.m_debugFly:
+db 01
+ 
+[DISABLE]
+[LocalPlayer]+Player.m_debugFly:
+db 0
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>192</ID>
+          <Description>"GodMode"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+[LocalPlayer]+Player.m_godMode:
+db 01
+ 
+[DISABLE]
+[LocalPlayer]+Player.m_godMode:
+db 0
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>302</ID>
+          <Description>"Damage Heal"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+if not CharacterApplyNegativeDamage or not getAddressSafe(CharacterApplyNegativeDamage)then CharacterApplyNegativeDamage=string.format('%X',findOpcodes('Character:ApplyDamage','xorpd xmm1,xmm1',0x300)[2])end
+[ENABLE]
+enablescript('CharacterApplyNegativeDamage_alloc','CharacterApplyNegativeDamage_save',CharacterApplyNegativeDamage,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(temp)
+label(value)
+%s:
+newmem:
+mov rax,LocalPlayer
+mov rax,[rax]
+cmp rax,rdi
+jne short @f
+movss xmm5,[rbp-14]
+mulss xmm5,[value]
+movss [rbp-14],xmm5
+@@:
+%s
+jmp returnhere
+
+value:
+dd (float)-1
+temp:
+dq 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('CharacterApplyNegativeDamage_alloc','CharacterApplyNegativeDamage_save',CharacterApplyNegativeDamage,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>190</ID>
+          <Description>"Free Craft,Building &amp; Upgrading"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+[LocalPlayer]+Player.m_noPlacementCost:
+db 01
+ 
+[DISABLE]
+[LocalPlayer]+Player.m_noPlacementCost:
+db 0
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>153</ID>
+          <Description>"Pull ItemList "</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+LaunchMonoDataCollector()
+--if not itemlists or itemlists=='' then
+local ObjectDB=getAddress('[ObjectDB]')
+if not ObjectDBGetItemPrefab or not getAddressSafe(ObjectDBGetItemPrefab)then ObjectDBGetItemPrefab=string.format('%X',findOpcodes('ObjectDB:GetItemPrefab','call',0x100)[2])end
+enablescript('ObjectDBGetItemPrefab_alloc','ObjectDBGetItemPrefab_save',ObjectDBGetItemPrefab,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(counter)
+alloc(ObjectDBNames,$10000)
+registersymbol(ObjectDBNames)
+
+%s:
+newmem:
+%s
+mov rcx,ObjectDBNames
+mov rdx,counter
+mov rdx,[rdx]
+imul rdx,rdx,8
+mov [rcx+rdx],rax
+mov rdx,counter
+inc [rdx]
+jmp returnhere
+counter:
+dq 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+local mem=allocateMemory(0x100)
+local str='banananana'
+writeInteger(mem+0x10,str:len())
+writeString(mem+0x14,str,true)
+print(mono_invoke_method(mono_enumDomains()[1],mono_findMethod('','ObjectDB', 'GetItemPrefab'), ObjectDB,{{type=vtPointer,value=mem}}))
+deAlloc(mem)
+
+itemlists=''
+local list,i,len,name=getAddress('ObjectDBNames'),0
+while(true)do
+  local pointer=readPointer(list+i*8)
+  if not pointer or pointer==0 then break end
+  len=readInteger(pointer+0x10)
+  name=readString(pointer+0x14,len*2,true)
+  itemlists=itemlists..'\n'..name
+  i=i+1
+end
+print(i)
+
+enablescript('ObjectDBGetItemPrefab_alloc','ObjectDBGetItemPrefab_save',ObjectDBGetItemPrefab,[[
+%X:
+readmem(%s+1,%u)
+dealloc(ObjectDBNames)
+unregistersymbol(ObjectDBNames)
+]],true)
+--end
+
+local rec = getAddressList().getMemoryRecordByDescription('ItemList')
+if not rec then
+  rec = getAddressList().createMemoryRecord()
+  rec.setDescription('ItemList')
+end
+rec.VarType='vtAutoAssembler'
+rec.Script='{'..itemlists..'\n}\n'..'[ENABLE]\n'..'[DISABLE]\n'
+rec.appendToEntry(memrec)
+[DISABLE]
+
+
+</AssemblerScript>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>156</ID>
+              <Description>"ItemList"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{
+Amber
+AmberPearl
+AncientSeed
+ArmorBronzeChest
+ArmorBronzeLegs
+ArmorIronChest
+ArmorIronLegs
+ArmorLeatherChest
+ArmorLeatherLegs
+ArmorPaddedCuirass
+ArmorPaddedGreaves
+ArmorRagsChest
+ArmorRagsLegs
+ArmorTrollLeatherChest
+ArmorTrollLeatherLegs
+ArmorWolfChest
+ArmorWolfLegs
+ArrowBronze
+ArrowFire
+ArrowFlint
+ArrowFrost
+ArrowIron
+ArrowNeedle
+ArrowObsidian
+ArrowPoison
+ArrowSilver
+ArrowWood
+AtgeirBlackmetal
+AtgeirBronze
+AtgeirIron
+AxeBlackMetal
+AxeBronze
+AxeFlint
+AxeIron
+AxeStone
+Barley
+BarleyFlour
+BarleyWine
+BarleyWineBase
+Battleaxe
+Beard1
+Beard10
+Beard2
+Beard3
+Beard4
+Beard5
+Beard6
+Beard7
+Beard8
+Beard9
+BeardNone
+BeechSeeds
+BeltStrength
+BlackMetal
+BlackMetalScrap
+blob_attack_aoe
+blobelite_attack_aoe
+Bloodbag
+BloodPudding
+Blueberries
+boar_base_attack
+BombOoze
+BoneFragments
+bonemass_attack_aoe
+bonemass_attack_punch
+bonemass_attack_spawn
+bonemass_attack_throw
+Bow
+BowDraugrFang
+BowFineWood
+BowHuntsman
+Bread
+Bronze
+BronzeNails
+CapeDeerHide
+CapeLinen
+CapeLox
+CapeOdin
+CapeTest
+CapeTrollHide
+CapeWolf
+Carrot
+CarrotSeeds
+CarrotSoup
+Chain
+Chitin
+Cloudberry
+Club
+Coal
+Coins
+CookedLoxMeat
+CookedMeat
+Copper
+CopperOre
+CryptKey
+Crystal
+Cultivator
+Dandelion
+Deathsquito_sting
+DeerHide
+dragon_bite
+dragon_claw_left
+dragon_claw_right
+dragon_coldbreath
+dragon_coldbreath_OLD
+dragon_spit_shotgun
+dragon_taunt
+DragonEgg
+DragonTear
+draugr_arrow
+draugr_axe
+draugr_bow
+draugr_sword
+Eikthyr_antler
+Eikthyr_charge
+Eikthyr_flegs_OLD
+Eikthyr_stomp
+ElderBark
+Entrails
+Feathers
+Fenring_attack_claw
+Fenring_attack_jump
+Fenring_taunt
+FineWood
+FirCone
+FishCooked
+FishingBait
+FishingRod
+FishRaw
+FishWraps
+Flametal
+FlametalOre
+Flax
+Flint
+FreezeGland
+gd_king_punch
+gd_king_rootspawn
+gd_king_scream
+gd_king_shoot
+gd_king_stomp
+Ghost_attack
+GoblinArmband
+GoblinBrute_ArmGuard
+GoblinBrute_Attack
+GoblinBrute_Backbones
+GoblinBrute_ExecutionerCap
+GoblinBrute_HipCloth
+GoblinBrute_LegBones
+GoblinBrute_RageAttack
+GoblinBrute_ShoulderGuard
+GoblinBrute_Taunt
+GoblinClub
+GoblinHelmet
+GoblinKing_Beam
+GoblinKing_Meteors
+GoblinKing_Nova
+GoblinKing_Taunt
+GoblinLegband
+GoblinLoin
+GoblinShaman_attack_fireball
+GoblinShaman_attack_poke
+GoblinShaman_attack_protect
+GoblinShaman_Headdress_antlers
+GoblinShaman_Headdress_feathers
+GoblinShaman_Staff_Bones
+GoblinShaman_Staff_Feathers
+GoblinShoulders
+GoblinSpear
+GoblinSword
+GoblinTorch
+GoblinTotem
+Greydwarf_attack
+Greydwarf_elite_attack
+Greydwarf_shaman_attack
+Greydwarf_shaman_heal
+Greydwarf_throw
+GreydwarfEye
+Greyling_attack
+Guck
+Hair1
+Hair10
+Hair11
+Hair12
+Hair13
+Hair14
+Hair2
+Hair3
+Hair4
+Hair5
+Hair6
+Hair7
+Hair8
+Hair9
+HairNone
+Hammer
+HardAntler
+hatchling_spit_cold
+HealthUpgrade_Bonemass
+HealthUpgrade_GDKing
+HelmetBronze
+HelmetDrake
+HelmetDverger
+HelmetIron
+HelmetLeather
+HelmetOdin
+HelmetPadded
+HelmetTrollLeather
+HelmetYule
+Hoe
+Honey
+imp_fireball_attack
+Iron
+IronNails
+IronOre
+IronScrap
+KnifeBlackMetal
+KnifeChitin
+KnifeCopper
+KnifeFlint
+LeatherScraps
+Leech_BiteAttack
+LinenThread
+lox_bite
+lox_stomp
+LoxMeat
+LoxPelt
+LoxPie
+MaceBronze
+MaceIron
+MaceNeedle
+MaceSilver
+MeadBaseFrostResist
+MeadBaseHealthMedium
+MeadBaseHealthMinor
+MeadBasePoisonResist
+MeadBaseStaminaMedium
+MeadBaseStaminaMinor
+MeadBaseTasty
+MeadFrostResist
+MeadHealthMedium
+MeadHealthMinor
+MeadPoisonResist
+MeadStaminaMedium
+MeadStaminaMinor
+MeadTasty
+Mushroom
+MushroomBlue
+MushroomYellow
+Neck_BiteAttack
+NeckTail
+NeckTailGrilled
+Needle
+Obsidian
+Ooze
+PickaxeAntler
+PickaxeBronze
+PickaxeIron
+PickaxeStone
+PineCone
+PlayerUnarmed
+QueenBee
+QueensJam
+Raspberry
+RawMeat
+Resin
+RoundLog
+Ruby
+Sausages
+Serpent_attack
+Serpent_taunt
+SerpentMeat
+SerpentMeatCooked
+SerpentScale
+SerpentStew
+SharpeningStone
+ShieldBanded
+ShieldBlackmetal
+ShieldBlackmetalTower
+ShieldBronzeBuckler
+ShieldIronSquare
+ShieldIronTower
+ShieldKnight
+ShieldSerpentscale
+ShieldSilver
+ShieldWood
+ShieldWoodTower
+Silver
+SilverNecklace
+SilverOre
+skeleton_bow
+skeleton_mace
+skeleton_sword
+SledgeIron
+SledgeStagbreaker
+SpearBronze
+SpearChitin
+SpearElderbark
+SpearFlint
+SpearWolfFang
+StaminaUpgrade_Greydwarf
+StaminaUpgrade_Troll
+StaminaUpgrade_Wraith
+Stone
+stonegolem_attack_doublesmash
+stonegolem_attack_sonicboom_NOTUSED
+stonegolem_attack1_spike
+stonegolem_attack2_left_groundslam
+stonegolem_attack3_spikesweep
+StoneGolem_clubs
+StoneGolem_hat
+StoneGolem_spikes
+SurtlingCore
+SwordBlackmetal
+SwordBronze
+SwordCheat
+SwordIron
+SwordIronFire
+SwordSilver
+Tankard
+TankardOdin
+tentaroot_attack
+Thistle
+Tin
+TinOre
+Torch
+troll_groundslam
+troll_log_swing_h
+troll_log_swing_v
+troll_punch
+troll_throw
+TrollHide
+TrophyBlob
+TrophyBoar
+TrophyBonemass
+TrophyDeathsquito
+TrophyDeer
+TrophyDragonQueen
+TrophyDraugr
+TrophyDraugrElite
+TrophyDraugrFem
+TrophyEikthyr
+TrophyFenring
+TrophyForestTroll
+TrophyFrostTroll
+TrophyGoblin
+TrophyGoblinBrute
+TrophyGoblinKing
+TrophyGoblinShaman
+TrophyGreydwarf
+TrophyGreydwarfBrute
+TrophyGreydwarfShaman
+TrophyHatchling
+TrophyLeech
+TrophyLox
+TrophyNeck
+TrophySerpent
+TrophySGolem
+TrophySkeleton
+TrophySkeletonPoison
+TrophySurtling
+TrophyTheElder
+TrophyWolf
+TrophyWraith
+Turnip
+TurnipSeeds
+TurnipStew
+VegvisirShard_Bonemass
+Wishbone
+WitheredBone
+Wolf_Attack1
+Wolf_Attack2
+Wolf_Attack3
+WolfFang
+WolfPelt
+Wood
+wraith_melee
+YagluthDrop
+YmirRemains
+}
+[ENABLE]
+[DISABLE]
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>157</ID>
+          <Description>"Item Spawner to Inventory"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+local rec=getAddressList().getMemoryRecordByDescription('ItemList')
+if not rec then print('ItemList missing') error('ItemList missing')end
+local script=createStringlist()
+script.Text=rec.Script
+local itemdropdownlist=''
+local i,k=0,0
+itemlist={}
+while(true)do
+ if script[i]=='{' then i=i+1 end
+ if script[i]=='}' then break end
+ itemdropdownlist=itemdropdownlist..string.format('%u:%s\n',k,script[i])
+ itemlist[k]=script[i]
+ i=i+1
+ k=k+1
+end
+
+ItemName=allocateMemory(0x10)
+writeInteger(ItemName+4,1)
+writeInteger(ItemName+8,1)
+writeInteger(ItemName+0xC,0)
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('name')
+rec.setAddress('ItemName')
+rec.VarType='vtDword'
+rec.DropDownList.Text=itemdropdownlist
+rec.DropDownDescriptionOnly=true
+rec.DisplayAsDropDownListItem=true
+rec.DontSave=true
+rec.appendToEntry(memrec)
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('stack')
+rec.setAddress('ItemName+4')
+rec.VarType='vtDword'
+rec.DontSave=true
+rec.appendToEntry(memrec)
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('quality')
+rec.setAddress('ItemName+8')
+rec.VarType='vtDword'
+rec.DontSave=true
+rec.appendToEntry(memrec)
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('variant')
+rec.setAddress('ItemName+C')
+rec.VarType='vtDword'
+rec.DontSave=true
+rec.appendToEntry(memrec)
+
+rec = getAddressList().createMemoryRecord()
+rec.setDescription('&lt;-- Add Item ')
+rec.VarType='vtAutoAssembler'
+rec.DontSave=true
+rec.Script=([==[
+{$lua}
+if syntaxcheck then return end
+ENABLE
+local itemName=itemlist[readInteger(ItemName)]
+local stack=readInteger(ItemName+4)
+local quality=readInteger(ItemName+8)
+local variant=readInteger(ItemName+0xC)
+local crafterID=readQword('[[[[[LocalPlayer]+Player.m_inventory]+Inventory.m_inventory]+10]+20]+ItemData.m_crafterID')
+local crafterName=getAddress('[[[[[[LocalPlayer]+Player.m_inventory]+Inventory.m_inventory]+10]+20]+ItemData.m_crafterName]')
+local Inventory=getAddress('[[LocalPlayer]+Player.m_inventory]')
+local mem=allocateMemory(0x100)
+writeInteger(mem+0x10,itemName:len())
+writeString(mem+0x14,itemName,true)
+local AddItemAddress=string.format('%X',mono_compile_method(mono_findMethods('Inventory','AddItem')[1]))
+local script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(AddItem)
+registersymbol(AddItem)
+label(temp)
+%s:
+newmem:
+mov rax,AddItem
+cmp byte ptr[rax],01
+jne @f
+mov [temp],rcx
+sub rsp,40
+mov rcx,Inventory
+mov r11,AddItemAddress
+mov rdx,itemName
+mov r8,stack
+mov r9,quality
+mov rax,variant
+mov [rsp+20],rax
+mov rax,crafterID
+mov [rsp+28],rax
+mov rax,crafterName
+mov [rsp+30],rax
+call r11
+mov rcx,AddItem
+mov byte ptr[rcx],0
+mov rcx,[temp]
+add rsp,40
+@@:
+%s
+jmp returnhere
+temp:
+dq 0 0
+AddItem:
+dq 1
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):gsub('AddItemAddress',AddItemAddress):gsub('Inventory',string.format('%X',Inventory)):gsub('itemName',string.format('%X',mem))
+:gsub('crafterName',string.format('%X',crafterName)):gsub('stack',string.format('%X',stack)):gsub('quality',string.format('%X',quality))
+:gsub('variant',string.format('%X',variant)):gsub('crafterID',string.format('%X',crafterID))
+enablescript('CharacterFixedUpdate_alloc','CharacterFixedUpdate_save',indexdism('Character:FixedUpdate')[4].add,script)
+local address=getAddress('AddItem')
+local i=0
+while(true)do
+  if readBytes(address,1)==0 then break end
+  sleep(1)
+  i=i+1
+  if i&gt;3000 then break end
+end
+enablescript('CharacterFixedUpdate_alloc','CharacterFixedUpdate_save',indexdism('Character:FixedUpdate')[4].add,[[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(AddItem)
+]],true)
+--print('done')
+DISABLE
+]==]):gsub('ENABLE','[ENABLE]'):gsub('DISABLE','[DISABLE]')
+rec.appendToEntry(memrec)
+
+--print(itemdropdownlist)
+
+[DISABLE]
+deAlloc(ItemName)
+ItemName=nil
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2</ID>
+          <Description>"MiniMap"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <GroupHeader>1</GroupHeader>
+          <Address>MiniMap</Address>
+          <Offsets>
+            <Offset>0</Offset>
+          </Offsets>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>201</ID>
+              <Description>"m_exploreRadius"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+MiniMap.m_exploreRadius</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>174</ID>
+          <Description>"ZNet"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <GroupHeader>1</GroupHeader>
+          <Address>ZNet</Address>
+          <Offsets>
+            <Offset>0</Offset>
+          </Offsets>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>179</ID>
+              <Description>"m_serverPlayerLimit"</Description>
+              <VariableType>4 Bytes</VariableType>
+              <Address>+ZNet.m_serverPlayerLimit</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>180</ID>
+              <Description>"m_saveStartTime"</Description>
+              <VariableType>Float</VariableType>
+              <Address>+ZNet.m_saveStartTime</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>181</ID>
+              <Description>"m_saveThreadStartTime"</Description>
+              <VariableType>Float</VariableType>
+              <Address>+ZNet.m_saveThreadStartTime</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>182</ID>
+              <Description>"m_netTime"</Description>
+              <VariableType>Double</VariableType>
+              <Address>+ZNet.m_netTime</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>158</ID>
+          <Description>"LocalPlayer"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <GroupHeader>1</GroupHeader>
+          <Address>LocalPlayer</Address>
+          <Offsets>
+            <Offset>0</Offset>
+          </Offsets>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>17</ID>
+              <Description>"m_maxCarryWeight"</Description>
+              <DropDownList DescriptionOnly="1" DisplayValueAsItem="1">(m_maxStamina):max
+</DropDownList>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_maxCarryWeight</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>13</ID>
+              <Description>"level"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>4 Bytes</VariableType>
+              <Address>+Player.m_level</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>14</ID>
+              <Description>"m_stealthFactor"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_stealthFactor</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>173</ID>
+              <Description>"m_speed"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_speed</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>15</ID>
+              <Description>"m_runSpeed"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_runSpeed</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>16</ID>
+              <Description>"m_swimSpeed"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_swimSpeed</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>199</ID>
+              <Description>"m_jumpForce"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_jumpForce</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>33</ID>
+              <Description>"m_flySlowSpeed"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_flySlowSpeed</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>34</ID>
+              <Description>"m_flyFastSpeed"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_flyFastSpeed</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>292</ID>
+              <Description>"m_inventory"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <GroupHeader>1</GroupHeader>
+              <Address>+Player.m_inventory</Address>
+              <Offsets>
+                <Offset>0</Offset>
+              </Offsets>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>293</ID>
+                  <Description>"m_height"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>+Inventory.m_height</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>294</ID>
+                  <Description>"m_totalWeight"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>Float</VariableType>
+                  <Address>+Inventory.m_totalWeight</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>32</ID>
+                  <Description>"m_inventory"</Description>
+                  <LastState/>
+                  <VariableType>Auto Assembler Script</VariableType>
+                  <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+local m_shared,m_name=getAddress('ItemData.m_shared'),getAddress('SharedData.m_name')
+memrec.setAddress('+Inventory.m_inventory')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+local count=readInteger(memrec.getCurrentAddress()+0x18)
+memrec.OffsetCount=2
+memrec.Offset[1]=0x10
+memrec.Offset[0]=0
+local address=memrec.getCurrentAddress()
+local rec,tec,pointer,len,name
+for i=0,count-1 do
+  pointer=readPointer(address+i*8+0x20)
+  pointer=readPointer(pointer+m_shared)
+  pointer=readPointer(pointer+m_name)
+
+  len=readInteger(pointer+0x10)
+
+  name=readString(pointer+0x14,len*2,true):gsub('$item_','')
+  rec = getAddressList().createMemoryRecord()
+  rec.setDescription(name)
+  rec.setAddress(string.format('+%X',i*8+0x20))
+  rec.OffsetCount=1
+  rec.Offset[0]=0
+  rec.VarType='vtByte'
+  rec.appendToEntry(memrec)
+  rec.IsAddressGroupHeader=true
+  rec.DontSave=true
+
+  tec = getAddressList().createMemoryRecord()
+  tec.setDescription('m_stack')
+  tec.setAddress('+ItemData.m_stack')
+  tec.VarType='vtDword'
+  tec.appendToEntry(rec)
+
+  tec = getAddressList().createMemoryRecord()
+  tec.setDescription('m_durability')
+  tec.setAddress('+ItemData.m_durability')
+  tec.VarType='vtSingle'
+  tec.appendToEntry(rec)
+
+  tec = getAddressList().createMemoryRecord()
+  tec.setDescription('m_quality')
+  tec.setAddress('+ItemData.m_quality')
+  tec.VarType='vtDword'
+  tec.appendToEntry(rec)
+
+end
+[DISABLE]
+</AssemblerScript>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>28</ID>
+              <Description>"m_stamina"</Description>
+              <DropDownList DescriptionOnly="1" DisplayValueAsItem="1">(m_maxStamina):max
+</DropDownList>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_stamina</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>4</ID>
+              <Description>"m_maxStamina"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Float</VariableType>
+              <Address>+Player.m_maxStamina</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>10</ID>
+              <Description>"m_noPlacementCost (FreeCraft &amp; FreeBuild)"</Description>
+              <DropDownList DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Byte</VariableType>
+              <Address>+Player.m_noPlacementCost</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>18</ID>
+              <Description>"m_debugFly"</Description>
+              <DropDownList DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Byte</VariableType>
+              <Address>+Player.m_debugFly</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>21</ID>
+              <Description>"m_godMode"</Description>
+              <DropDownList DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Byte</VariableType>
+              <Address>+Player.m_godMode</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>20</ID>
+              <Description>"m_ghostMode"</Description>
+              <DropDownList DescriptionOnly="1" DisplayValueAsItem="1">0:No
+1:Yes
+</DropDownList>
+              <ShowAsSigned>0</ShowAsSigned>
+              <VariableType>Byte</VariableType>
+              <Address>+Player.m_ghostMode</Address>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>303</ID>
+          <Description>""</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>291</ID>
+              <Description>"print prefablist"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+[ENABLE]
+local list=getAddress('[[[ZNetScene]+ZNetScene.m_prefabs]+10]')
+local ZNetScene=getAddress('[ZNetScene]')
+if not ZNetSceneGetPrefabHash or not getAddressSafe(ZNetSceneGetPrefabHash)then ZNetSceneGetPrefabHash=string.format('%X',findOpcodes('ZNetScene:GetPrefabHash','call',0x100)[1])end
+enablescript('ZNetSceneGetPrefabHash_alloc','ZNetSceneGetPrefabHash_save',ZNetSceneGetPrefabHash,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(prefabName)
+registersymbol(prefabName)
+
+%s:
+newmem:
+%s
+mov [prefabName],rax
+jmp returnhere
+prefabName:
+dq 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+prefablist=''
+local prefabName,pointer,j,pointers,len,name=getAddress('prefabName')
+for i=0,readInteger(list+0x18)-1 do
+  pointer=readPointer(list+i*8+0x20)
+  if pointer and pointer~=0 then
+    writePointer(prefabName,0)
+    mono_invoke_method(mono_enumDomains()[1],mono_findMethod('','ZNetScene', 'GetPrefabHash'), ZNetScene,{{type=vtPointer,value=pointer}})
+    j=0
+    while(true)do
+      if readPointer(prefabName)~=0 then break end
+      if j&gt;5000 then break end
+      j=j+1
+    end
+    pointers=readPointer(prefabName)
+    len=readInteger(pointers+0x10)
+    if len then
+      name=readString(pointers+0x14,len*2,true)
+      prefablist=prefablist..string.format('%016X: %s\n',pointer,name)
+    end
+  end
+end
+
+
+
+
+enablescript('ZNetSceneGetPrefabHash_alloc','ZNetSceneGetPrefabHash_save',ZNetSceneGetPrefabHash,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+
+
+print(prefablist)
+[DISABLE]
+
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>193</ID>
+              <Description>"Healed instead of Damaged"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+LaunchMonoDataCollector()
+if not CharacterApplyDamageHeal or not getAddressSafe(CharacterApplyDamageHeal)then CharacterApplyDamageHeal=string.format('%X',findOpcodes('Character:ApplyDamage','xmm0',0x300)[1])end
+[ENABLE]
+enablescript('CharacterApplyDamageHeal_alloc','CharacterApplyDamageHeal_save',CharacterApplyDamageHeal,[[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(value)
+%s:
+newmem:
+mov rax,LocalPlayer
+mov rax,[rax]
+cmp rax,rdi
+jne short @f
+movzx r8,byte ptr [rbp-000000A8]
+mov rcx,rdi
+movss xmm1,[value]
+mulss xmm1,xmm0
+mov r11,"Character:Heal"
+sub rsp,40
+call r11
+add rsp,40
+//imul xmm0,[value]
+@@:
+%s
+jmp returnhere
+
+value:
+dd (float)10
+%s:
+db %X %s
+%X:
+jmp newmem
+]])
+
+[DISABLE]
+
+enablescript('CharacterApplyDamageHeal_alloc','CharacterApplyDamageHeal_save',CharacterApplyDamageHeal,[[
+%X:
+readmem(%s+1,%u)
+]],true)
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>19</ID>
+              <Description>"ExploreAll (Need to Re-login)"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+mono_invoke_method(mono_enumDomains()[1],mono_findMethod('', 'Minimap', 'ExploreAll'), getAddress('[Minimap]'),{})
+
+ 
+ 
+[DISABLE]
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>183</ID>
+              <Description>"TameAll"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+mono_invoke_method(mono_enumDomains()[1],mono_findMethod('', 'Tameable', 'TameAllInArea'), 0,{})
+
+ 
+ 
+[DISABLE]
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>312</ID>
+              <Description>"ClearPins (Will most likely bug out MiniMap's gui)"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+mono_invoke_method(mono_enumDomains()[1],mono_findMethod('', 'Minimap', 'SetMapMode'), getAddress('[Minimap]'),{{type=vtByte,value=0}})
+mono_invoke_method(mono_enumDomains()[1],mono_findMethod('', 'Minimap', 'ClearPins'), getAddress('[Minimap]'),{})
+
+[DISABLE]
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>457</ID>
+          <Description>"Offset Based"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>455</ID>
+              <Description>"LocalPlayer"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('LocalPlayer')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','Player',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>460</ID>
+              <Description>"MiniMap"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('MiniMap')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','MiniMap',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>458</ID>
+              <Description>"ZNet"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('ZNet')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','ZNet',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>456</ID>
+              <Description>"EnvMan"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('EnvMan')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','EnvMan',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>461</ID>
+              <Description>"ZoneSystem"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('ZoneSystem')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','ZoneSystem',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>462</ID>
+              <Description>"Game"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('Game')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','Game',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>463</ID>
+              <Description>"Chat"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('Chat')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','Chat',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>464</ID>
+              <Description>"GameCamera"</Description>
+              <LastState Activated="1"/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('GameCamera')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','GameCamera',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>2796</ID>
+                  <Description>"[140] m_freeFlyVel"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>+140</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>2795</ID>
+                  <Description>"[144] m_freeFlyVel"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>+144</Address>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>459</ID>
+              <Description>"ObjectDB"</Description>
+              <LastState/>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+if syntaxcheck then return end
+for i=memrec.Count-1,0,-1 do
+  memoryrecord_delete(memrec.Child[i])
+end
+[ENABLE]
+memrec.setAddress('ObjectDB')
+memrec.OffsetCount=1
+memrec.Offset[0]=0
+mono_creatememrec('','ObjectDB',0x10,nil,memrec.getCurrentAddress(),memrec)
+ 
+ 
+[DISABLE]
+
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+</CheatTable>

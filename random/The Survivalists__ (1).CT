@@ -1,0 +1,1015 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="31">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>99</ID>
+      <Description>"Main Scipt"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{$lua}
+
+function editlist(list,i,active,count,call,param,out)
+list=getAddress(list)
+writeInteger(list+i*0x1C+0x8+0x10,out)
+writeInteger(list+i*0x1C+0x8+0xC,param)
+writeInteger(list+i*0x1C+0x8+0x8,call)
+writeInteger(list+i*0x1C+0x8+0x4,count)
+writeInteger(list+i*0x1C+0x8,active)
+end
+
+function registerStatic(Symbol,number,AddressOrAOBString,modulename,stopaddress,Nth,aobscanOnly)
+	local size,address=0x100
+    AddressOrAOBString,address=string.lower(AddressOrAOBString):gsub('banana','')
+	if(address&gt;0)then
+		local f
+		if(modulename==0 or modulename==nil or modulename=='')then f=AOBScan(AddressOrAOBString)
+		else
+			local ms = createMemScan()
+			if(stopaddress==0 or stopaddress==nil or stopaddress=='')then
+				stopaddress=getNameFromAddress(modulename,true,false)
+                if(stopaddress:find("+")~=nil)then stopaddress=stopaddress:sub(0,stopaddress:find("+")-1)end
+				if(getModuleSize(stopaddress)==nil)then error('Module '..modulename..' not found') end
+                modulename=getAddress(stopaddress)
+				stopaddress=modulename+getModuleSize(stopaddress)
+			end
+			ms.firstScan(soExactValue,vtByteArray,rtTruncated,AddressOrAOBString,'',getAddress(modulename),getAddress(stopaddress),'',fsmNotAligned,'',true,false,false,false)
+			ms.waitTillDone()
+			f = createFoundList(ms)
+			f.initialize()
+			ms.destroy()
+		end
+		if(f.Count==0)then error(Symbol..' aob no result found') end
+		if(Nth==nil)then Nth=0 end
+		if(getAddress(f[Nth])==0)then error(Symbol..' aob result '..Nth..' doesnt exist') end
+		unregisterSymbol(Symbol)
+		registerSymbol(Symbol,getAddressSafe(f[Nth]))
+		f.destroy()
+
+		AddressOrAOBString=GetAddressSafe(Symbol)
+        if aobscanOnly then return end
+	end
+    AddressOrAOBString=getAddressSafe(AddressOrAOBString)
+	if(AddressOrAOBString==nil)then error(Symbol..' still cant be found')end
+	local addr={}
+	local i=0
+	local j=1
+	while(i&lt;size) do
+		local ext, opc, byt, add=splitDisassembledString(disassemble(getAddressSafe(AddressOrAOBString)+i))
+		if(ext~="")then
+			if(opc:find(",")~=nil)then
+				opc=opc:sub(opc:find(",")+1,opc:len())
+			else
+				opc=opc:sub(opc:find(" ")+1,opc:len())
+			end
+			addr[j]=opc:gsub("%[",""):gsub("]","") j=j+1
+		end
+		i=i+getInstructionSize(AddressOrAOBString+i)
+	end
+    --for i=1,#addr do print(addr[i]) end
+	unregisterSymbol(Symbol)
+	registerSymbol(Symbol,getAddressSafe(addr[number]))
+end
+
+function isStructExist(name)
+for i=0,getStructureCount()-1 do
+if(getStructure(i).getName()==name)then return true end
+end
+return false
+end
+
+function deletestruct(name)
+local count=getStructureCount()
+local structure
+for i=0,count-1 do
+structure=getStructure(i)
+if(structure.getName()==name)then structure.removeFromGlobalStructureList() break end
+end end
+
+function monocreatestruct(namespace,classname)
+--deletestruct(classname)
+if(isStructExist(classname))then deletestruct(classname) end
+local fields =mono_class_enumFields(mono_findClass(namespace,classname),true)
+local struct=createStructure(classname)
+for n=1,#fields do
+local e=struct.addElement()
+e.Offset=fields[n].offset
+e.Name=fields[n].name
+e.Vartype=monoTypeToVarType(fields[n].monotype)
+end
+struct.addToGlobalStructureList()
+end
+
+function getInsForJump(address,registername,allocsize)
+  address = getAddressSafe(address)
+  if(address==nil)then error('getInsForJump address nil') return end
+  if(allocsize==nil)then allocsize=2048 end
+  allocaddress = allocateMemory(allocsize,address)
+  local size = (address+5-allocaddress&gt;0x7FFFFFFF) and 14 or 5
+  if(registername~=nil)then
+  unregisterSymbol(registername)
+  registerSymbol(registername,allocaddress)
+  else deAlloc(allocaddress) end
+  local opcodes = {}
+  local i = 0
+  while(i&lt;size) do
+    local ext, opc=splitDisassembledString(disassemble(address+i))
+    opcodes[#opcodes+1] = opc
+    i=i+getInstructionSize(address+i)
+  end
+  local copy = table.concat(opcodes,'\r\n')
+  local readAsTable = true
+  local byt = readBytes(address,i,readAsTable)
+  for j=1,#byt do byt[j] = ('%02X'):format(byt[j]) end
+  local bytes = table.concat(byt, ' ')
+  return i,copy,bytes,size
+end
+
+function mono_findmethodinclass(classname,methodname,paramname)
+  local ass=mono_enumAssemblies()
+  local result
+  if ass==nil then return nil end
+  for i=1, #ass do
+	local result=0
+	if monopipe==nil then return 0 end
+	monopipe.lock()
+	local c=mono_image_enumClasses(mono_getImageFromAssembly(ass[i]))
+	if c then
+		local j
+		for j=1, #c do
+		--check that classname is in c[j].classname
+		if c[j].classname==classname then
+			local methods = mono_class_enumMethods(c[j].class,false)
+			for k=1,#methods do
+				if(methods[k].name==methodname) then
+					if(paramname==nil) then result=methods[k].method break end
+					local resul, parameternames, returntype = mono_method_getSignature(methods[k].method)
+					if(#paramname==#parameternames) then
+                        if(#paramname==0)then result=methods[k].method break end
+						for l=1,#parameternames do
+							if(paramname[l]~=parameternames[l]) then break end
+							if(l==#parameternames) then result=methods[k].method break end
+						end
+					end
+				end
+			end
+		end
+		end
+	end
+	monopipe.unlock()
+    if (result~=0) then
+      return result;
+    end
+  end
+end
+if syntaxcheck then return end
+[ENABLE]
+LaunchMonoDataCollector()
+
+local name='caller_alloc'
+local registername='caller_saved'
+local addressname='caller'
+
+registerStatic(addressname,1,'8B 75 E8 3B C6banana 74 32 8B 10 85 D2','UnityPlayer.dll',nil,nil,true)
+
+local address=getAddress(addressname)
+local counter=addressname..'.counter'
+local i,copy,bytes,size =getInsForJump(address,name)
+local script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+
+label(%s)
+registersymbol(%s)
+%s:
+newmem:
+
+push eax
+mov eax,temp
+mov [eax+4],ebx
+pop ebx
+mov [eax+8],ebx
+mov [eax+C],ecx
+mov [eax+10],edx
+mov [eax+14],esi
+mov [eax+18],edi
+mov [eax+1C],rbp
+mov [eax+20],rsp
+inc [%s]
+mainLoop:
+mov esi,%s
+xor edi,edi
+mov edi,[esi] //listcount
+test edi,edi
+je finish
+cmp [esi+4],edi //count
+jl short @f
+mov [esi+4],0
+jmp finish
+@@:
+xor eax,eax
+xor edx,edx
+mov eax,[esi+4]
+inc [esi+4]
+imul eax,eax,14
+lea edi,[esi+eax+8]
+mov edx,[edi+4]
+test edx,edx
+jne short @f
+
+add eax,14
+lea edx,[esi+eax+8]
+
+xor eax,eax
+mov ecx,[edx]
+mov [edi],ecx
+mov [edx],eax
+mov ecx,[edx+4]
+mov [edi+4],ecx
+mov [edx+4],eax
+mov ecx,[edx+8]
+mov [edi+8],ecx
+mov [edx+8],eax
+mov ecx,[edx+C]
+mov [edi+C],ecx
+mov [edx+C],eax
+
+dec [esi]
+@@:
+xor eax,eax
+mov eax,[edi]
+test eax,eax
+je mainLoop
+mov eax,temp
+mov [eax],edi
+cmp [edi+4],1
+jl short @f
+dec [edi+4]
+@@:
+mov esi,[edi+C]
+test esi,esi
+je short @f
+call esi
+@@:
+mov esi,[edi+8]
+test esi,esi
+je short @f
+call esi
+@@:
+mov edi,temp
+mov edi,[edi]
+mov esi,[edi+10]
+test esi,esi
+je short @f
+call esi
+@@:
+jmp mainLoop
+
+finish:
+
+mov eax,temp
+mov ebx,[eax+4]
+mov ecx,[eax+C]
+mov edx,[eax+10]
+mov esi,[eax+14]
+mov edi,[eax+18]
+mov rbp,[eax+1C]
+mov rsp,[eax+20]
+mov eax,[eax+8]
+
+%s
+jmp returnhere
+%s:
+dq 0
+temp:
+dq 0 0 0 0 0 0 0 0 0 0 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):format( counter, counter, registername, registername, name, counter,addressname..'.list', copy, counter, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+unregisterSymbol(addressname..'.list')
+registerSymbol(addressname..'.list',allocateMemory(0x1000,address))
+--local chec1,chec2=autoAssembleCheck(script,false)
+--print(tostring(chec1))
+--print(tostring(chec2))
+local success=autoAssemble(script)
+if(not success)then
+deAlloc(name)
+unregisterSymbol(name)
+error('autoAssemble failed')
+end
+
+[DISABLE]
+local name='caller_alloc'
+local registername='caller_saved'
+local addressname='caller'
+local address=getAddress(addressname)
+local script=([[
+%X:
+readmem(%s+1,%u)
+]]):format(address,registername,readBytes(registername,1))
+local success=autoAssemble(script)
+if(not success)then error('autoAssemble failed')
+else
+deAlloc(name)
+unregisterSymbol(name)
+unregisterSymbol(registername)
+end
+
+unregisterSymbol(addressname)
+unregisterSymbol(addressname..'.counter')
+deAlloc(addressname..'.list')
+unregisterSymbol(addressname..'.list')
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>105</ID>
+          <Description>"Get player stamina&amp;networkID"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+
+[ENABLE]
+--]5C]
+
+monocreatestruct('','BootServices')
+monocreatestruct('','UniqueDirectoryLookup')
+monocreatestruct('','CosmeticStamina')
+monocreatestruct('','ObjectPoolManagedGameEntity')
+monocreatestruct('','BootAllocatorAsync')
+monocreatestruct('','PreAllocatedWorld')
+monocreatestruct('','EntityManager')
+--monocreatestruct('','ObjectPool`1')
+monocreatestruct('','LogicalInventory')
+monocreatestruct('','InventoryData')
+--monocreatestruct('','ItemStack')
+monocreatestruct('','LogicalHunger')
+monocreatestruct('','HungerMessage')
+monocreatestruct('','ItemDefinition')
+monocreatestruct('','CharacterAnimationController')
+monocreatestruct('','CharacterMovementSettings')
+monocreatestruct('','CharacterMovementSettingsConfig')
+if syntaxcheck then return end
+
+registerStatic('_BootServices',2,'BootServices.HasInstance')
+
+local name='_CosmeticStaminaOnUpdate_alloc'
+local registername='_CosmeticStaminaOnUpdate_saved'
+local addressname='CosmeticStamina.OnUpdate'
+local address=getAddress(addressname)
+local i,copy,bytes,size =getInsForJump(address,name)
+local script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(_CosmeticStamina)
+registersymbol(_CosmeticStamina)
+%s:
+newmem:
+mov eax,[esp+4]
+mov [_CosmeticStamina],eax
+%s
+jmp returnhere
+_CosmeticStamina:
+dq 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):format(registername, registername, name, copy, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+local success=autoAssemble(script)
+if(not success)then
+deAlloc(name)
+unregisterSymbol(name)
+error(name..' autoAssemble failed')
+end
+-------------------------------
+name='_Team17StringLocalizationLocalizationGet_alloc'
+registername='_Team17StringLocalizationLocalizationGet_saved'
+addressname='Team17.StringLocalization.Localization.Get'
+address=getAddress(addressname)
+i,copy,bytes,size =getInsForJump(address,name)
+script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(_LocalizationLocToken)
+registersymbol(_LocalizationLocToken)
+%s:
+newmem:
+mov eax,[esp+8]
+mov [_LocalizationLocToken],eax
+%s
+jmp returnhere
+_LocalizationLocToken:
+dq 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):format(registername, registername, name, copy, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+success=autoAssemble(script)
+if(not success)then
+deAlloc(name)
+unregisterSymbol(name)
+error(name..' autoAssemble failed')
+end
+-----------------------------------------
+name='_CharacterAnimationControllerOnUpdate_alloc'
+registername='_CharacterAnimationControllerOnUpdate_saved'
+addressname='CharacterAnimationController.OnUpdate'
+address=getAddress(addressname)
+i,copy,bytes,size =getInsForJump(address,name)
+script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+label(_CharacterAnimationController)
+registersymbol(_CharacterAnimationController)
+%s:
+newmem:
+mov eax,[esp+4]
+mov [_CharacterAnimationController],eax
+%s
+jmp returnhere
+_CharacterAnimationController:
+dq 0
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):format(registername, registername, name, copy, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+success=autoAssemble(script)
+if(not success)then
+deAlloc(name)
+unregisterSymbol(name)
+error(name..' autoAssemble failed')
+end
+[DISABLE]
+if syntaxcheck then return end
+
+unregisterSymbol('_BootServices')
+
+
+local name='_CosmeticStaminaOnUpdate_alloc'
+local registername='_CosmeticStaminaOnUpdate_saved'
+local addressname='CosmeticStamina.OnUpdate'
+local address=getAddress(addressname)
+local script=([[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(_CosmeticStamina)
+]]):format(address,registername,readBytes(registername,1))
+local success=autoAssemble(script)
+if(not success)then error('autoAssemble failed')
+else
+deAlloc(name)
+unregisterSymbol(name)
+unregisterSymbol(registername)
+end
+-----------------------------------------
+name='_Team17StringLocalizationLocalizationGet_alloc'
+registername='_Team17StringLocalizationLocalizationGet_saved'
+addressname='Team17.StringLocalization.Localization.Get'
+address=getAddress(addressname)
+script=([[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(_LocalizationLocToken)
+]]):format(address,registername,readBytes(registername,1))
+local success=autoAssemble(script)
+if(not success)then error('autoAssemble failed')
+else
+deAlloc(name)
+unregisterSymbol(name)
+unregisterSymbol(registername)
+end
+-----------------------------------------
+
+name='_CharacterAnimationControllerOnUpdate_alloc'
+registername='_CharacterAnimationControllerOnUpdate_saved'
+addressname='CharacterAnimationController.OnUpdate'
+address=getAddress(addressname)
+script=([[
+%X:
+readmem(%s+1,%u)
+unregistersymbol(_CharacterAnimationController)
+]]):format(address,registername,readBytes(registername,1))
+local success=autoAssemble(script)
+if(not success)then error('autoAssemble failed')
+else
+deAlloc(name)
+unregisterSymbol(name)
+unregisterSymbol(registername)
+end
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>112</ID>
+          <Description>"Get player Inventory through networkID"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+LaunchMonoDataCollector()
+for i=0,memrec.Count-1 do
+	memoryrecord_delete(memrec.Child[i])
+end
+local address={}
+
+local checkID=getAddressList().getMemoryRecordByDescription('m_NetworkID')
+if(checkID==nil)then print('m_NetworkID is missing')error()
+elseif not checkID.IsReadable then print('m_NetworkID value is not yet loaded ')error() end
+
+unregisterSymbol('AssetDirectory.m_AllItems') registerSymbol('AssetDirectory.m_AllItems',getAddressSafe('[[[[_BootServices]+5C]+BootServices.AssetDirectory]+UniqueDirectoryLookup.m_AllItems]'))
+
+local list=getAddressSafe('[[[[[[[_BootServices]+5C]+BootServices.allocatorAsync]+BootAllocatorAsync.m_Logical]+PreAllocatedWorld.entityManager]+EntityManager.m_EntityPool]+14]')
+local NetworkID=--getAddressList().getMemoryRecordByDescription('m_NetworkID').Value
+readInteger(getAddressSafe('[[[_CosmeticStamina]+10]+CosmeticStamina.m_EntityHandle]+ObjectPoolManagedGameEntity.m_NetworkID'))
+for i=0,readInteger(list+0xC)-1
+do
+	local pointer=readPointer(list+0x10+i*0x4)
+	if(readInteger(pointer+0x18)==tonumber(NetworkID))then list=pointer break end
+	--print(i..'='..string.format('%X',pointer)..':'..string.format('%X',readInteger(pointer+0x18)))end
+end
+list =readPointer(list+getAddress('ObjectPoolManagedGameEntity.m_ComponentList'))
+
+
+for i=0,readInteger(list+0xC)-1
+do
+	pointer=readPointer(list+0x10+i*0x4)
+	local currentaddress, classaddress, classname=mono_object_findRealStartOfObject(getAddress(pointer))
+	--print(string.format('%X = ',currentaddress)..classname)
+	if(classname=='LogicalInventory')then address[1]=currentaddress end
+    if(classname=='LogicalWallet')then address[2]=currentaddress end
+    if(classname=='LogicalHunger')then address[3]=currentaddress end
+    if(classname=='LogicalHealth')then address[4]=currentaddress end
+end
+if(address[2]~=0)then unregisterSymbol('_LogicalWallet') registerSymbol('_LogicalWallet',address[2])end
+if(address[3]~=0)then unregisterSymbol('_LogicalHunger') registerSymbol('_LogicalHunger',address[3])end
+if(address[4]~=0)then
+unregisterSymbol('_LogicalHealth.offset') registerSymbol('_LogicalHealth.offset',((readInteger(address[4]+0xC)&gt;&gt;4)*8-(readInteger(address[4]+0xC)&gt;&gt;4))*4)
+unregisterSymbol('_player.ID') registerSymbol('_player.ID',readInteger(address[4]+0xC)-1)
+end
+
+list=readPointer('_CharacterAnimationController')
+for i=0,readInteger(list+0xC)-1
+do
+pointer=readPointer(list+0x10+i*0x4)
+if(readInteger(pointer+0xC)==getAddress('_player.ID'))then unregisterSymbol('_player.CharacterAnimationController') registerSymbol('_player.CharacterAnimationController',pointer)break end
+end
+
+unregisterSymbol('m_WorldNativePool.Data') registerSymbol('m_WorldNativePool.Data','[[[[[[_BootServices]+5C]+BootServices.allocatorAsync]+BootAllocatorAsync.m_Logical]+PreAllocatedWorld.entityManager]+EntityManager.m_WorldNativePool]+C')
+
+
+local symbol='Item'
+local mem=allocateMemory(0x1000)
+registerSymbol(symbol,mem)
+
+autoAssemble(([[
+label(temp)
+label(itemlist)
+registersymbol(itemlist)
+%X: //param
+mov ecx,[_LocalizationLocToken]
+mov [esp+8],ecx
+
+xor edx,edx
+mov eax,[temp]
+mov ecx,2
+div ecx
+test edx,edx
+mov ecx,[AssetDirectory.m_AllItems+8]
+mov ecx,[ecx+eax*4+10]
+//mov [edi],0
+jne short @f
+mov eax,[ecx+ItemDefinition.m_DisplayName]
+mov [esp+4],eax
+ret
+@@:
+mov eax,[ecx+ItemDefinition.m_Description]
+mov [esp+4],eax
+ret
+
+%X: //output
+mov edx,[temp]
+imul edx,edx,4
+mov ecx,itemlist
+inc [ecx]
+mov [ecx+edx+4],eax
+inc [temp]
+xor edx,edx
+mov ecx,2
+mov eax,[AssetDirectory.m_AllItems+C]
+imul eax,eax,2
+cmp [temp],eax
+jl short @f
+mov [edi],0
+@@:
+ret
+temp:
+dq 0 0 0 0
+db 0 0
+itemlist:
+dq 0
+]]):format(mem,mem+0x50))
+
+editlist('caller.list',0,1,-1,getAddress('Team17.StringLocalization.Localization.Get'),mem,mem+0x50)
+writeInteger('caller.list',readInteger('caller.list')+1)
+
+sleep(1000)
+
+local namedesc=getAddress('itemlist')
+local stri=[[0:None]]
+local list=getAddressSafe('[[[[_BootServices]+5C]+BootServices.AssetDirectory]+UniqueDirectoryLookup.m_AllItems]')
+for i=0, readInteger(list+0xC)-1
+do
+local pointer=readPointer(readPointer(list+0x8)+i*0x4+0x10)
+--local str=readPointer(pointer+0x14)+0xC
+--local len=readInteger(readPointer(pointer+0x14)+0x8)
+--local name=readString(str,len*2,true)
+--print(string.format('%X',pointer)..':'..name:sub(name:find('Item.')+5,name:find('.Name')-1))
+stri=stri..'\n'..pointer..':'..readString(readPointer(namedesc+i*0x8+0x4)+0xC,readInteger(readPointer(namedesc+i*0x8+0x4)+0x8)*2,true)..' - '..readString(readPointer(namedesc+i*0x8+0x8)+0xC,readInteger(readPointer(namedesc+i*0x8+0x8)+0x8)*2,true)
+end
+
+
+
+local rec,tec,xec,sec,wec
+
+
+if(address[1]~=nil or address[1]~=0)then
+	rec = getAddressList().createMemoryRecord()
+	rec.setDescription('LogicalInventory')
+	rec.DontSave=true
+	rec.VarType = 'vtByteArray'
+	rec.Size=0
+	rec.setAddress(address[1])
+    rec.appendToEntry(memrec)
+	--rec.Options='[moHideChildren]'
+
+	tec=getAddressList().createMemoryRecord()
+	tec.setDescription('m_Inventory')
+	tec.VarType = 'vtByteArray'
+	tec.setAddress('+LogicalInventory.m_Inventory')
+	tec.appendToEntry(rec)
+	--tec.Options='[moHideChildren]'
+    tec.OffsetCount=1
+
+	xec=getAddressList().createMemoryRecord()
+	xec.setDescription('m_Slots')
+	xec.VarType = 'vtByteArray'
+	xec.setAddress('+InventoryData.m_Slots')
+	xec.appendToEntry(tec)
+	xec.Options='[moHideChildren]'
+    xec.OffsetCount=1
+
+	for i=0,readInteger(readPointer(readPointer(address[1]+getAddress('LogicalInventory.m_Inventory'))+getAddress('InventoryData.m_Slots'))+0xC)-1 do
+		sec=getAddressList().createMemoryRecord()
+		sec.setDescription(i+1)
+		sec.VarType = 'vtDword'
+		sec.setAddress(string.format('+%X*10+10',i))
+		sec.appendToEntry(xec)
+        sec.DropDownList.Text=stri
+        sec.DropDownDescriptionOnly=true
+        sec.DisplayAsDropDownListItem=true
+
+		wec=getAddressList().createMemoryRecord()
+		wec.setDescription('m_Count')
+		wec.VarType = 'vtDword'
+		wec.setAddress('+4')
+		wec.appendToEntry(sec)
+
+		wec=getAddressList().createMemoryRecord()
+		wec.setDescription('m_Durability')
+		wec.VarType = 'vtDword'
+		wec.setAddress('+8')
+		wec.appendToEntry(sec)
+
+		--[[wec=getAddressList().createMemoryRecord()
+		wec.setDescription('m_bUnlimitedStack')
+		wec.VarType = 'vtByte'
+		wec.setAddress('+C')
+		wec.appendToEntry(sec)]]
+	end
+
+end
+[DISABLE]
+unregisterSymbol('_LogicalWallet')
+for i=0,memrec.Count-1 do
+	memoryrecord_delete(memrec.Child[i])
+end
+local symbol='Item'
+deAlloc(symbol)
+unregisterSymbol(symbol)
+unregisterSymbol('itemlist')
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2</ID>
+          <Description>"CosmeticStamina"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <ShowAsHex>1</ShowAsHex>
+          <VariableType>Array of byte</VariableType>
+          <ByteLength>0</ByteLength>
+          <Address>_CosmeticStamina</Address>
+          <Offsets>
+            <Offset>0</Offset>
+            <Offset>10</Offset>
+          </Offsets>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>106</ID>
+              <Description>"m_Value"</Description>
+              <VariableType>Float</VariableType>
+              <Address>+CosmeticStamina.m_Value</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>107</ID>
+              <Description>"m_MaxValue"</Description>
+              <VariableType>Float</VariableType>
+              <Address>+CosmeticStamina.m_MaxValue</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>108</ID>
+              <Description>"m_EntityHandle"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <ShowAsHex>1</ShowAsHex>
+              <VariableType>Array of byte</VariableType>
+              <ByteLength>0</ByteLength>
+              <Address>+CosmeticStamina.m_EntityHandle</Address>
+              <Offsets>
+                <Offset>0</Offset>
+              </Offsets>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>110</ID>
+                  <Description>"m_NetworkID"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>+ObjectPoolManagedGameEntity.m_NetworkID</Address>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>311</ID>
+          <Description>"Health"</Description>
+          <LastState Value="10000" RealAddress="203EC1DC"/>
+          <VariableType>4 Bytes</VariableType>
+          <Address>[m_WorldNativePool.Data]+_LogicalHealth.offset+C</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>313</ID>
+          <Description>"Hunger"</Description>
+          <LastState Value="97" RealAddress="2E514E4C"/>
+          <VariableType>4 Bytes</VariableType>
+          <Address>[_LogicalHunger+LogicalHunger.m_Message]+HungerMessage.m_Saturation</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>389</ID>
+          <Description>"m_WalkSpeed"</Description>
+          <LastState Value="10.97999954" RealAddress="1CD23508"/>
+          <VariableType>Float</VariableType>
+          <Address>[[_player.CharacterAnimationController+CharacterAnimationController.m_MovementSettings]+CharacterMovementSettings.m_Config]+CharacterMovementSettingsConfig.m_WalkSpeed</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>390</ID>
+          <Description>"m_RunSpeed"</Description>
+          <LastState Value="3.599999905" RealAddress="1CD2350C"/>
+          <VariableType>Float</VariableType>
+          <Address>[[_player.CharacterAnimationController+CharacterAnimationController.m_MovementSettings]+CharacterMovementSettings.m_Config]+CharacterMovementSettingsConfig.m_RunSpeed</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>312</ID>
+          <Description>"Y axis"</Description>
+          <LastState Value="-101.1882324" RealAddress="203EC1D4"/>
+          <VariableType>Float</VariableType>
+          <Address>[m_WorldNativePool.Data]+_LogicalHealth.offset+4</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>273</ID>
+          <Description>"X axis"</Description>
+          <LastState Value="487.5863953" RealAddress="203EC1D0"/>
+          <VariableType>Float</VariableType>
+          <Address>[m_WorldNativePool.Data]+_LogicalHealth.offset</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>149</ID>
+          <Description>"Item Durability++"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+local name='_LogicalInventoryManagerReduceItemDurability_alloc'
+local registername='_LogicalInventoryManagerReduceItemDurability_saved'
+local addressname='LogicalInventoryManager.ReduceItemDurability'
+
+[ENABLE]
+
+local address=getAddress(addressname)
+
+local i,copy,bytes,size =getInsForJump(address,name)
+local script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+%s:
+newmem:
+mov [esp+10],#-1
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):format(registername, registername, name, copy, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+local success=autoAssemble(script)
+if(not success)then
+deAlloc(name)
+unregisterSymbol(name)
+error('autoAssemble failed')
+end
+
+[DISABLE]
+local address=getAddress(addressname)
+
+local script=([[
+%X:
+readmem(%s+1,%u)
+]]):format(address,registername,readBytes(registername,1))
+local success=autoAssemble(script)
+if(not success)then error('autoAssemble failed')
+else
+deAlloc(name)
+unregisterSymbol(name)
+unregisterSymbol(registername)
+end
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>187</ID>
+          <Description>"Max gold"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+[ENABLE]
+local GiveDoubloons=allocateMemory(0x1000)
+registerSymbol('GiveDoubloons',GiveDoubloons)
+
+autoAssemble(([[
+%X: //param
+mov [esp+4],%X
+mov [esp+8],%X
+ret
+
+%X: //output
+ret
+]]):format(GiveDoubloons,getAddress('_LogicalWallet'),9999999,GiveDoubloons+0x50))
+
+editlist('caller.list',0,1,1,getAddress('LogicalWallet.GiveDoubloons'),GiveDoubloons,GiveDoubloons+0x50)
+writeInteger('caller.list',readInteger('caller.list')+1)
+
+[DISABLE]
+deAlloc('GiveDoubloons')
+unregisterSymbol('GiveDoubloons')
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>236</ID>
+          <Description>"InventoryLogic ContainsIngredients true (Free Craft)"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+local name='_InventoryLogicContainsIngredients_alloc'
+local registername='_InventoryLogicContainsIngredients_saved'
+local addressname='InventoryLogic.ContainsIngredients'
+
+[ENABLE]
+
+local address=getAddress(addressname)
+
+local i,copy,bytes,size =getInsForJump(address,name)
+local script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+%s:
+newmem:
+xor eax,eax
+mov al,01
+ret
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):format(registername, registername, name, copy, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+local success=autoAssemble(script)
+if(not success)then
+deAlloc(name)
+unregisterSymbol(name)
+error('autoAssemble failed')
+end
+
+[DISABLE]
+local address=getAddress(addressname)
+
+local script=([[
+%X:
+readmem(%s+1,%u)
+]]):format(address,registername,readBytes(registername,1))
+local success=autoAssemble(script)
+if(not success)then error('autoAssemble failed')
+else
+deAlloc(name)
+unregisterSymbol(name)
+unregisterSymbol(registername)
+end
+
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>150</ID>
+          <Description>"Item Stack min 50"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{$lua}
+if syntaxcheck then return end
+local name='_LogicalInventoryManagerRemoveItemStack_alloc'
+local registername='_LogicalInventoryManagerRemoveItemStack_saved'
+local addressname='LogicalInventoryManagerRemoveItemStack'
+
+[ENABLE]
+registerSymbol(addressname,mono_compile_method(mono_findmethodinclass('LogicalInventoryManager','RemoveItemStack',{'target','targetSlot','count'})))
+local address=getAddress(addressname)
+
+local i,copy,bytes,size =getInsForJump(address,name)
+local script=([[
+label(newmem)
+label(returnhere)
+label(%s)
+registersymbol(%s)
+%s:
+newmem:
+mov eax,[esp+8]
+mov eax,[eax+InventoryData.m_Slots]
+mov ecx,[esp+C]
+imul ecx,ecx,10
+add ecx,10
+lea eax,[eax+ecx+4]
+cmp [eax],#50
+jnl short @f
+mov [eax],#50
+mov [esp+10],0
+@@:
+%s
+jmp returnhere
+%s:
+db %X %s
+%X:
+jmp newmem
+]]):format(registername, registername, name, copy, registername, i, bytes, address)..string.rep('nop\n',i-size)..'returnhere:'
+local success=autoAssemble(script)
+if(not success)then
+deAlloc(name)
+unregisterSymbol(name)
+error('autoAssemble failed')
+end
+
+[DISABLE]
+local address=getAddress(addressname)
+
+local script=([[
+%X:
+readmem(%s+1,%u)
+]]):format(address,registername,readBytes(registername,1))
+local success=autoAssemble(script)
+if(not success)then error('autoAssemble failed')
+else
+deAlloc(name)
+unregisterSymbol(name)
+unregisterSymbol(registername)
+end
+unregisterSymbol(addressname)
+</AssemblerScript>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+</CheatTable>

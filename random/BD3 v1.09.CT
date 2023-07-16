@@ -1,0 +1,1363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="34">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>195</ID>
+      <Description>"─────────────────────     S   C   R   I   P   T   S      &amp;     E   D   I   T   O   R   S    ────────────────────────"</Description>
+      <Options moHideChildren="1"/>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>400080</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>222</ID>
+          <Description>"Compact UI (Ctrl + Numpad 1)"</Description>
+          <LastState/>
+          <Color>008000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+
+luacall(function cycleFullCompact(sender,force); local state = not(compactmenuitem.Caption == 'Compact View Mode'); if force~=nil then state = not force end; compactmenuitem.Caption = state and 'Compact View Mode' or 'Full view Mode'; getMainForm().Splitter1.Visible = state; getMainForm().Panel4.Visible = state; getMainForm().Panel5.Visible = state; end; function addCompactMenu(); if compactmenualreadyexists then return end; local parent = getMainForm().Menu.Items; compactmenuitem = createMenuItem(parent); parent.add(compactmenuitem); compactmenuitem.Caption = 'Compact View Mode'; compactmenuitem.OnClick = cycleFullCompact; compactmenualreadyexists = 'yes'; end; addCompactMenu(); cycleFullCompact(nil,true))
+
+[DISABLE]
+
+luacall(cycleFullCompact(nil,false))
+</AssemblerScript>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Toggle Activation</Action>
+              <Keys>
+                <Key>17</Key>
+                <Key>97</Key>
+              </Keys>
+              <ID>0</ID>
+              <ActivateSound TTS="EN">Compact UI Activated</ActivateSound>
+              <DeactivateSound TTS="EN">Compact UI Deactivated</DeactivateSound>
+            </Hotkey>
+          </Hotkeys>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>17</ID>
+          <Description>"Near Player Proximity Kill (Ctrl + Numpad 2)"</Description>
+          <LastState/>
+          <Color>0000FF</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : bd3.exe
+  Version: v1.09
+  Date   : 2021-04-02
+  Author : ndck76
+}
+
+[ENABLE]
+{$lua}
+LaunchMonoDataCollector()
+{$asm}
+aobscanregion(enemy,Enemy:UserCode_Rpc_playerpositionupdate+71,Enemy:UserCode_Rpc_playerpositionupdate+b2,24 D9 87 88 01 00 00) //Enemy:UserCode_Rpc_playerpositionupdate+94 D9 87 88 01 00 00
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  mov [edi+00000188],0
+  jmp return
+
+enemy+01:
+  jmp newmem
+  nop
+return:
+registersymbol(enemy)
+
+[DISABLE]
+
+enemy+01:
+  db D9 87 88 01 00 00
+
+unregistersymbol(enemy)
+dealloc(newmem)
+
+</AssemblerScript>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Toggle Activation</Action>
+              <Keys>
+                <Key>17</Key>
+                <Key>98</Key>
+              </Keys>
+              <ID>0</ID>
+              <ActivateSound TTS="EN">Near Player Proximity Kill Activated</ActivateSound>
+              <DeactivateSound TTS="EN">Near Player Proximity Kill Deactivated</DeactivateSound>
+            </Hotkey>
+          </Hotkeys>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>12</ID>
+          <Description>"Controls (Player) (Ctrl + Numpad 3)"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>800080</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : bd3.exe
+  Version: v1.09
+  Date   : 2021-04-02
+  Author : ndck76
+}
+
+[ENABLE]
+{$lua}
+LaunchMonoDataCollector()
+{$asm}
+aobscanregion(hp1,Controls:healthbar+33,Controls:healthbar+8a,D9 * * * * * DE * DD) //Controls:healthbar+61: D9 87 8C 04 00 00//D9 87 8C 04 00 00 DE F9 DD
+alloc(newmem,$1000)
+
+alloc(data,8)
+registersymbol(data)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  mov [data],edi
+  fld dword ptr [edi+0000048C]
+  jmp return
+
+hp1:
+  jmp newmem
+  nop
+return:
+registersymbol(hp1)
+
+[DISABLE]
+
+hp1:
+  db D9 87 8C 04 00 00
+
+unregistersymbol(hp1)
+unregistersymbol(data)
+dealloc(newmem)
+dealloc(data)
+
+</AssemblerScript>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Toggle Activation</Action>
+              <Keys>
+                <Key>17</Key>
+                <Key>99</Key>
+              </Keys>
+              <ID>0</ID>
+              <ActivateSound TTS="EN">Controls (Player) Activated</ActivateSound>
+              <DeactivateSound TTS="EN">Controls (Player) Deactivated</DeactivateSound>
+            </Hotkey>
+          </Hotkeys>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>19</ID>
+              <Description>"Current Health"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>800080</Color>
+              <VariableType>Float</VariableType>
+              <Address>data</Address>
+              <Offsets>
+                <Offset>4fc</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>20</ID>
+              <Description>"Current Stamina"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>800080</Color>
+              <VariableType>Float</VariableType>
+              <Address>data</Address>
+              <Offsets>
+                <Offset>49c</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>227</ID>
+              <Description>"Current PvP Soul Health"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>800080</Color>
+              <VariableType>Float</VariableType>
+              <Address>data</Address>
+              <Offsets>
+                <Offset>500</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>229</ID>
+              <Description>"Max Health"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>800080</Color>
+              <VariableType>Float</VariableType>
+              <Address>data</Address>
+              <Offsets>
+                <Offset>48c</Offset>
+              </Offsets>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>228</ID>
+              <Description>"Max Stamina"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>800080</Color>
+              <VariableType>Float</VariableType>
+              <Address>data</Address>
+              <Offsets>
+                <Offset>4a0</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>53</ID>
+          <Description>"Character Sheet (Ctrl + Numpad 4)"</Description>
+          <Options moHideChildren="1"/>
+          <LastState/>
+          <Color>800000</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : bd3.exe
+  Version: v1.09
+  Date   : 2021-04-02
+  Author : ndck76
+}
+
+[ENABLE]
+{$lua}
+LaunchMonoDataCollector()
+{$asm}
+aobscanregion(runspeed,Controls:movement+2189,Controls:movement+21d5,* 8B * * * * * 8B * * * * * 50) // Controls:movement+21b2: 8B 80 54 01 00 00//00 8B 87 40 03 00 00 8B 80 54 01 00 00 50
+alloc(newmem,$1000)
+
+alloc(data2,8)
+registersymbol(data2)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  mov [data2],eax
+  mov eax,[eax+00000154]
+  jmp return
+
+runspeed+07:
+  jmp newmem
+  nop
+return:
+registersymbol(runspeed)
+
+[DISABLE]
+
+runspeed+07:
+  db 8B 80 54 01 00 00
+
+unregistersymbol(runspeed)
+unregistersymbol(data2)
+dealloc(newmem)
+dealloc(data2)
+
+</AssemblerScript>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Toggle Activation</Action>
+              <Keys>
+                <Key>17</Key>
+                <Key>100</Key>
+              </Keys>
+              <ID>0</ID>
+              <ActivateSound TTS="EN">Character Sheet Activated</ActivateSound>
+              <DeactivateSound TTS="EN">Character Sheet Deactivated</DeactivateSound>
+            </Hotkey>
+          </Hotkeys>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>225</ID>
+              <Description>"PvE Stats"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>800000</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>102</ID>
+                  <Description>"Max Health"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>f0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>103</ID>
+                  <Description>"Max Stamina"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>Float</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>f4</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>129</ID>
+                  <Description>"Black Coin"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>15c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>130</ID>
+                  <Description>"Black Key"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>160</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>131</ID>
+                  <Description>"Heart Soul"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>164</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>100</ID>
+                  <Description>"Damage"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>e8</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>114</ID>
+                  <Description>"Critical"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>120</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>115</ID>
+                  <Description>"Super Critical"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>124</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>101</ID>
+                  <Description>"Off Damage"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>ec</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>54</ID>
+                  <Description>"Difficulty All"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>30</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>55</ID>
+                  <Description>"Difficulty Bae"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>34</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>56</ID>
+                  <Description>"Level"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>38</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>57</ID>
+                  <Description>"Level Con"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>3c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>58</ID>
+                  <Description>"Level Strength"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>40</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>59</ID>
+                  <Description>"Level Dexerity"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>44</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>60</ID>
+                  <Description>"Level Strength Dexerity"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>48</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>61</ID>
+                  <Description>"Level Strength Intel"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>4c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>62</ID>
+                  <Description>"Level Strength Spi"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>50</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>63</ID>
+                  <Description>"Level Dexerity Spi"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>54</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>64</ID>
+                  <Description>"Level Dexerity Intel"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>58</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>65</ID>
+                  <Description>"Level Str Dexerity Intel"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>5c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>66</ID>
+                  <Description>"Level Intel"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>60</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>67</ID>
+                  <Description>"Level Spi"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>64</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>68</ID>
+                  <Description>"Level Strength Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>68</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>69</ID>
+                  <Description>"Level Dexerity Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>6c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>70</ID>
+                  <Description>"Level Strength Dexerity Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>70</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>71</ID>
+                  <Description>"Level Strength Intel Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>74</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>72</ID>
+                  <Description>"Level Strength Spi Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>78</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>73</ID>
+                  <Description>"Level Dexerity Spi Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>7c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>74</ID>
+                  <Description>"Level Dexerity Intel Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>80</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>75</ID>
+                  <Description>"Level Strength Dexerity Intel Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>84</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>76</ID>
+                  <Description>"Level Intel Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>88</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>77</ID>
+                  <Description>"Level Spi Max"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>8c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>78</ID>
+                  <Description>"Experience Global"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>90</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>79</ID>
+                  <Description>"Strength Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>94</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>80</ID>
+                  <Description>"Strength Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>98</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>81</ID>
+                  <Description>"Dexerity Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>9c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>82</ID>
+                  <Description>"Dexerity Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>a0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>83</ID>
+                  <Description>"Strength Dexerity Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>a4</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>84</ID>
+                  <Description>"Strength Dexerity Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>a8</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>85</ID>
+                  <Description>"Strength Intel Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>ac</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>86</ID>
+                  <Description>"Stregth Intel Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>b0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>87</ID>
+                  <Description>"Dexerity Spi Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>b4</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>88</ID>
+                  <Description>"Dexerity Spi Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>b8</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>89</ID>
+                  <Description>"Strength Spi Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>bc</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>90</ID>
+                  <Description>"Stremgth Spi Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>c0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>91</ID>
+                  <Description>"Dexerity Intel Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>c4</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>92</ID>
+                  <Description>"Dexerity Intel Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>c8</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>93</ID>
+                  <Description>"Strength Dexerity Intel Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>cc</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>94</ID>
+                  <Description>"Strength Dexerity Intel Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>d0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>95</ID>
+                  <Description>"Intel Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>d4</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>96</ID>
+                  <Description>"Intel Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>d8</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>97</ID>
+                  <Description>"Spi Experience"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>dc</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>98</ID>
+                  <Description>"Spi Experience Requirement"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>e0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>99</ID>
+                  <Description>"Race"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>e4</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>104</ID>
+                  <Description>"Strength"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>f8</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>105</ID>
+                  <Description>"Dexerity"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>fc</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>106</ID>
+                  <Description>"Intel"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>100</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>107</ID>
+                  <Description>"Spi"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>104</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>108</ID>
+                  <Description>"Con"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>108</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>109</ID>
+                  <Description>"Armor"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>Float</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>10c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>110</ID>
+                  <Description>"Dodge"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>110</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>111</ID>
+                  <Description>"Parry"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>114</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>112</ID>
+                  <Description>"Phase"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>118</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>113</ID>
+                  <Description>"Bless"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>11c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>116</ID>
+                  <Description>"Proc"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>128</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>117</ID>
+                  <Description>"Super Proc"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>12c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>118</ID>
+                  <Description>"Smite"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>130</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>119</ID>
+                  <Description>"Super Smite"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>134</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>120</ID>
+                  <Description>"Cleave"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>138</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>121</ID>
+                  <Description>"Super Cleave"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>13c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>122</ID>
+                  <Description>"Chop"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>140</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>123</ID>
+                  <Description>"Stun"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>144</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>124</ID>
+                  <Description>"Deathstrike"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>148</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>125</ID>
+                  <Description>"Regen"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>14c</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>126</ID>
+                  <Description>"Lifesteal"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>150</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>127</ID>
+                  <Description>"Runspeed"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>154</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>128</ID>
+                  <Description>"Berserk"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>158</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>132</ID>
+                  <Description>"New Game Amount"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>168</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>133</ID>
+                  <Description>"True New Game Amount"</Description>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>800000</Color>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>data2</Address>
+                  <Offsets>
+                    <Offset>16c</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>196</ID>
+      <Description>"────────────────────────────    Created    By   N D C K 7 6    ───────────────────────────────────"</Description>
+      <Options moHideChildren="1"/>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>008080</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>197</ID>
+          <Description>"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>198</ID>
+          <Description>"MMMMMMMMMMMMMMMMMMMMMMMMNNMMMMMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>199</ID>
+          <Description>"  MMMMMMMMMMMMMMMMMMMMMMNN++NNMMMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>200</ID>
+          <Description>"   MMMMMMMMMMMMMMMMMMMMMMNy++yNMMMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>201</ID>
+          <Description>"    MMMMMMMMMMMMMMMMMMMMMNhoddohNMMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>202</ID>
+          <Description>"     MMMMMMMMMMMMMMMMMMMMNd+hddh+dNMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>203</ID>
+          <Description>"      MMMMMMMMMMMMMMMMMMNNmshmyymhsmNNMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>204</ID>
+          <Description>"       MMMMMMMMMMMMMMMMMNNNddmhyyhmddNNNMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>205</ID>
+          <Description>"          MMMMMMMMMMMMMMMMmNmNds/-::-/sdNmNmMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>206</ID>
+          <Description>"           MMMMMMMMMMMMNMMmdhNy-+ysmmsy+-yNhdmMMNMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>207</ID>
+          <Description>"             MMMMMMMMMMMMNNNmmNd:shhyyyyhhs:dNmmNNNMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>208</ID>
+          <Description>"       MMMMMMMMMMMMMNNmmNshmMmhyyhmMmhsNmmNNMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>209</ID>
+          <Description>"        MMMMMMMMNMMMNNNmmsydmhmmNNmmhmdysmmNNNMMMNMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>210</ID>
+          <Description>"                   MMMMMMNNdNNNmmhyhsdNm..hood..mNhsdyhmmNNNdNNMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>211</ID>
+          <Description>"                      MMMMMMNNh:/++//sdhNmmdhhyyhhdmmNhds//++/:hNNMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>212</ID>
+          <Description>"                        MMMMMMNmds.`.:yhdMNdhhosmmsohhdNMdhy:.`.sdmNMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>213</ID>
+          <Description>"                  MMMMMMMNmh:-/:sdmNMNNdo+oo+odNNMNmds:/-:hmNMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>214</ID>
+          <Description>"            MMMNMMNNNmmo-omNmhdNNmmdhhdmmNNdhmNmo-ommNNNMMNMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>215</ID>
+          <Description>"               MMMMNNNNNmNNy+sNmdyhmmhhddhhmmhydmNs+yNNmNNNNNMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>216</ID>
+          <Description>"              MMMMMMNNddmNNdyhNMMNdddhhhhdddNMMNhyhNNmddNNMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>217</ID>
+          <Description>"        MMMMMMMMmdyydmMNNNNNNMNmddmNMNNNNNNMmdyydmMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>218</ID>
+          <Description>"           MMMMMMMMMMNNdyyyhddmNmmddddmmNmdddyyydNNMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>219</ID>
+          <Description>"         MMMMMMMMMMMMMMNNmddhhhhhyyhhhhhddmNNMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>220</ID>
+          <Description>" MMMMMMMMMMMMMMMMMMMMMNNNNNNNNMMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>221</ID>
+          <Description>"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>408080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+  <Signature>
+    <SignedHash HashSize="132">0Ij?RBs5j[Hz+,fu.}FlC?K]IH)H@9k@dh?A=1!2(J-he6i}q#k;0-ab5$rHX@UQ8UWfJ4$AVPvOVA)Uz.OY3+RFDW^^z:k-GP=3+L)W0sZiGQYVV/QyXDdZBukraW$s0T6!6?(u/2.URGRf}guL,+^mt1}U$t,}gsS0m</SignedHash>
+    <PublicKey Size="1714">5C8xGQ*y;zWn;@=c[2/iLrXU^i}s?vMMG0HLI3}(0B2$))Q?JH-IFHS3U_E-B,b=Spo::fSV%yc6W{,apec9X?F]@lbmge,-u6q;K1c+3^%vNtkurgQI5,n^qW%GlpC1*QxK6DcOa@HC@BO-mby.e2+Cv%l0kc2+M,FfbTs+2k[]*d5#UHqd#e#JHW/NtXTEuh:C.Kif9XvsN1Azqq0RPzk.Q-o2cxh$.07+$I00.m800.mQ0RsR5000010000Q0R.d70001P0000R0R.d70001X0000e0RsR5000020000n0RjLL0001f0000o0RjLN0001x0000J0s^a6000010001KhXeot0001[000000000.000010000.000010000%Lqt/$Wgt.=X:7[3R%vB-05UK#F+-0YIx.aJF*%tcIXW.f00RJ!k@%q(0000uGynhspacK]0000y00003pacK]0000K000000000000030zyJ^l02BZ]0_6lb0uccN5dr[)0E7Sn0RaI40RjO50RjR70s^pD0_EjA1[T5H1qTKP2L{cR1[%iY2=z*Z2nGiV4GIbi3:9nn2MG:j4h#/q3:9kb0_NsD0_W;J1PBrg3Jekw5*u+.5*u+.5*u+.5*u+.5*u+.5*u+.5*u+.5*u+.5*u+.5*u+.5*u+.5*u+._HJ?*000360RaF20000000000009C92M7rO3J=GR0t5sF0_NsE00000000330_W(I2LK2W5)yI(Au$RfK@0M978e;MGedEa0RRI50RR910000000000000651OX8M0s.a71Oos700000000010ssRM5,MXJL4hJ,?c-HX3/CiG0ucid06ze$S$Xu.%kQpBE#7d3WTsGXwWSR@s@VqsNzmYdh:E8]P^Dk]xh^aec7Tn)4kB)4oE9j4B3AC=T=[k_Nu8;b(}D3GL_?UwV2d%1Eu]v[w3L9bf#B:E?rPR3!74ZrS:D$ZDSQqm*1E4@95iNGs.8AcOz2B}s{C-BUYsx:4i;$s3+-QH1s=si]NPvZJOykPRv;7*)uU76YAR.FYB4g1]JAn{dfkYGdy={/nCJuFs0Z,W2M=[%M)xL)2_cc0bY6U9[mgez@o:UpS=RUOr+oYIsE$Om$:Rr37:nh3dLaRCCC9nPXl+Ckpe0%!+m7li)eXmv;tMv^/naZ7g^lHwb{Cs(z[l:hVX(jIT.)^E-8vJhMu,c,yC?)DRnL)tj$M5:b:[.23g)T;PG*I{HiEa3h=)TxsFgh2#w]%7t3*fN3LAF}R8+s(,I+Z/=jc-0X/VM;RzA/#49]*wDw@ow/]Vj+Uoc@wb5A31Lyd*}CB%=H8vVR?#%j8iwKu@Yrjyg1wNekc:nEh?v9a/F4_ENNmesO)Z)U?n8Jq,;bj70.4C@i{qS{=HA!/xOJ9Gr.,r}5F);E%Ly7@Mf=XgXFC4!w!CKRjizo[Po!X=zP9.e,QZV_4Hw4=s=A2^64jh3[VKZMAuz%AYeGeuxOm-=?t=yQ)mrmQmYQ{s#cOTSC$f4#2Vyzgf1bl2w*-yhtnS-hx2T3HmL@F(k@7NU%vPHJfz6+twT?_NC?-wI+c1fm:+3nZj?DL-sVJkc(c7e/fFUkbX4-cYwTSc-zmwMf+gH7%K-ITsHV2(NqXC0[D@R7mbd)TXp[(h$=+qrhV]nX]qvPbR(t:8$wGiK8,8t@yfFvk;!5=%bWh[4_PT02sptAYe^lM}9^ZHdValyua3;rMi+]%F3jm*S60NaN=WjrZKI!Pbp;7wMjdYN;7x7,p*w=;N^3Qro2q1rh%P6!bU@W@2TTFP!NncE.BINi}CgCf[H#h3eb5S]_FFVE$@GoKIDp.+A*qx0wMH)1Iqvn017;Z18:.{yr*#1eC.G[jMC9M^NYYI;(oUl.+[ttj.916F%PH@r/QdZ9aMYZa}$RJx2tZt=bo.b!3Z01Z7ev[%2YflCqgmGQkJ5nD3W]UesDs6_Jj590001awr]$=4QYE6Or5g1?lb:P.S}/q#[x$,/Z1Jzq?7W,vh}#;%:{#yDkrE#@#{%0YjRa^(zU4fC3Z7HDo#.40qpyZa8)MtO4_T)TD6rzVcZAz6i?4t]9Ue2+%SD22Hl3XYuEcp@2?M_ur1YwC%A_?9e12Ss2YWSz,@J{naB</PublicKey>
+  </Signature>
+</CheatTable>

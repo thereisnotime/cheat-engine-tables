@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="29">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>5</ID>
+      <Description>"Resource Multipliers"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>1</ID>
+          <Description>"Picked resource multiplier x2"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : ForestVillage.exe
+  Version: 
+  Date   : 2020-08-29
+  Author : Suomalainen
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+//code from here to '[DISABLE]' will be used to enable the cheat
+
+ 
+ 
+aobscanmodule(INJECT,ForestVillage.exe,01 41 28 8D 4D 08 E8 34) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+imul, eax,2
+code:
+  add [ecx+28],eax
+  lea ecx,[ebp+08]
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+//code from here till the end of the code will be used to disable the cheat
+INJECT:
+  db 01 41 28 8D 4D 08
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: "ForestVillage.exe"+42B181
+
+"ForestVillage.exe"+42B168: FF D0                 -  call eax
+"ForestVillage.exe"+42B16A: 84 C0                 -  test al,al
+"ForestVillage.exe"+42B16C: 74 16                 -  je ForestVillage.exe+42B184
+"ForestVillage.exe"+42B16E: 53                    -  push ebx
+"ForestVillage.exe"+42B16F: 8D 45 E0              -  lea eax,[ebp-20]
+"ForestVillage.exe"+42B172: 50                    -  push eax
+"ForestVillage.exe"+42B173: 8D 4F 3C              -  lea ecx,[edi+3C]
+"ForestVillage.exe"+42B176: E8 E5 04 CD FF        -  call ForestVillage.exe+FB660
+"ForestVillage.exe"+42B17B: 8B 4D E0              -  mov ecx,[ebp-20]
+"ForestVillage.exe"+42B17E: 8B 43 18              -  mov eax,[ebx+18]
+// ---------- INJECTING HERE ----------
+"ForestVillage.exe"+42B181: 01 41 28              -  add [ecx+28],eax
+"ForestVillage.exe"+42B184: 8D 4D 08              -  lea ecx,[ebp+08]
+// ---------- DONE INJECTING  ----------
+"ForestVillage.exe"+42B187: E8 34 83 BE FF        -  call ForestVillage.exe+134C0
+"ForestVillage.exe"+42B18C: 8B 45 08              -  mov eax,[ebp+08]
+"ForestVillage.exe"+42B18F: 3B C6                 -  cmp eax,esi
+"ForestVillage.exe"+42B191: 75 C4                 -  jne ForestVillage.exe+42B157
+"ForestVillage.exe"+42B193: 8B 1D 60 A5 35 01     -  mov ebx,[ForestVillage.exe+9CA560]
+"ForestVillage.exe"+42B199: 8D 47 3C              -  lea eax,[edi+3C]
+"ForestVillage.exe"+42B19C: 50                    -  push eax
+"ForestVillage.exe"+42B19D: 8D 4F 28              -  lea ecx,[edi+28]
+"ForestVillage.exe"+42B1A0: E8 7B 0E 00 00        -  call ForestVillage.exe+42C020
+"ForestVillage.exe"+42B1A5: 8D 4D E8              -  lea ecx,[ebp-18]
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>6</ID>
+          <Description>"Picked resource multiplier x4"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : ForestVillage.exe
+  Version: 
+  Date   : 2020-08-29
+  Author : Suomalainen
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+//code from here to '[DISABLE]' will be used to enable the cheat
+
+ 
+ 
+aobscanmodule(INJECT,ForestVillage.exe,01 41 28 8D 4D 08 E8 34) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+imul, eax,4
+code:
+  add [ecx+28],eax
+  lea ecx,[ebp+08]
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+//code from here till the end of the code will be used to disable the cheat
+INJECT:
+  db 01 41 28 8D 4D 08
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: "ForestVillage.exe"+42B181
+
+"ForestVillage.exe"+42B168: FF D0                 -  call eax
+"ForestVillage.exe"+42B16A: 84 C0                 -  test al,al
+"ForestVillage.exe"+42B16C: 74 16                 -  je ForestVillage.exe+42B184
+"ForestVillage.exe"+42B16E: 53                    -  push ebx
+"ForestVillage.exe"+42B16F: 8D 45 E0              -  lea eax,[ebp-20]
+"ForestVillage.exe"+42B172: 50                    -  push eax
+"ForestVillage.exe"+42B173: 8D 4F 3C              -  lea ecx,[edi+3C]
+"ForestVillage.exe"+42B176: E8 E5 04 CD FF        -  call ForestVillage.exe+FB660
+"ForestVillage.exe"+42B17B: 8B 4D E0              -  mov ecx,[ebp-20]
+"ForestVillage.exe"+42B17E: 8B 43 18              -  mov eax,[ebx+18]
+// ---------- INJECTING HERE ----------
+"ForestVillage.exe"+42B181: 01 41 28              -  add [ecx+28],eax
+"ForestVillage.exe"+42B184: 8D 4D 08              -  lea ecx,[ebp+08]
+// ---------- DONE INJECTING  ----------
+"ForestVillage.exe"+42B187: E8 34 83 BE FF        -  call ForestVillage.exe+134C0
+"ForestVillage.exe"+42B18C: 8B 45 08              -  mov eax,[ebp+08]
+"ForestVillage.exe"+42B18F: 3B C6                 -  cmp eax,esi
+"ForestVillage.exe"+42B191: 75 C4                 -  jne ForestVillage.exe+42B157
+"ForestVillage.exe"+42B193: 8B 1D 60 A5 35 01     -  mov ebx,[ForestVillage.exe+9CA560]
+"ForestVillage.exe"+42B199: 8D 47 3C              -  lea eax,[edi+3C]
+"ForestVillage.exe"+42B19C: 50                    -  push eax
+"ForestVillage.exe"+42B19D: 8D 4F 28              -  lea ecx,[edi+28]
+"ForestVillage.exe"+42B1A0: E8 7B 0E 00 00        -  call ForestVillage.exe+42C020
+"ForestVillage.exe"+42B1A5: 8D 4D E8              -  lea ecx,[ebp-18]
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>2</ID>
+          <Description>"Picked resource multiplier x8"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : ForestVillage.exe
+  Version: 
+  Date   : 2020-08-29
+  Author : Suomalainen
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+//code from here to '[DISABLE]' will be used to enable the cheat
+
+ 
+ 
+aobscanmodule(INJECT,ForestVillage.exe,01 41 28 8D 4D 08 E8 34) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+imul, eax,8
+code:
+  add [ecx+28],eax
+  lea ecx,[ebp+08]
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+//code from here till the end of the code will be used to disable the cheat
+INJECT:
+  db 01 41 28 8D 4D 08
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: "ForestVillage.exe"+42B181
+
+"ForestVillage.exe"+42B168: FF D0                 -  call eax
+"ForestVillage.exe"+42B16A: 84 C0                 -  test al,al
+"ForestVillage.exe"+42B16C: 74 16                 -  je ForestVillage.exe+42B184
+"ForestVillage.exe"+42B16E: 53                    -  push ebx
+"ForestVillage.exe"+42B16F: 8D 45 E0              -  lea eax,[ebp-20]
+"ForestVillage.exe"+42B172: 50                    -  push eax
+"ForestVillage.exe"+42B173: 8D 4F 3C              -  lea ecx,[edi+3C]
+"ForestVillage.exe"+42B176: E8 E5 04 CD FF        -  call ForestVillage.exe+FB660
+"ForestVillage.exe"+42B17B: 8B 4D E0              -  mov ecx,[ebp-20]
+"ForestVillage.exe"+42B17E: 8B 43 18              -  mov eax,[ebx+18]
+// ---------- INJECTING HERE ----------
+"ForestVillage.exe"+42B181: 01 41 28              -  add [ecx+28],eax
+"ForestVillage.exe"+42B184: 8D 4D 08              -  lea ecx,[ebp+08]
+// ---------- DONE INJECTING  ----------
+"ForestVillage.exe"+42B187: E8 34 83 BE FF        -  call ForestVillage.exe+134C0
+"ForestVillage.exe"+42B18C: 8B 45 08              -  mov eax,[ebp+08]
+"ForestVillage.exe"+42B18F: 3B C6                 -  cmp eax,esi
+"ForestVillage.exe"+42B191: 75 C4                 -  jne ForestVillage.exe+42B157
+"ForestVillage.exe"+42B193: 8B 1D 60 A5 35 01     -  mov ebx,[ForestVillage.exe+9CA560]
+"ForestVillage.exe"+42B199: 8D 47 3C              -  lea eax,[edi+3C]
+"ForestVillage.exe"+42B19C: 50                    -  push eax
+"ForestVillage.exe"+42B19D: 8D 4F 28              -  lea ecx,[edi+28]
+"ForestVillage.exe"+42B1A0: E8 7B 0E 00 00        -  call ForestVillage.exe+42C020
+"ForestVillage.exe"+42B1A5: 8D 4D E8              -  lea ecx,[ebp-18]
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>3</ID>
+          <Description>"Picked resource multiplier x10 (16)"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : ForestVillage.exe
+  Version: 
+  Date   : 2020-08-29
+  Author : Suomalainen
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+//code from here to '[DISABLE]' will be used to enable the cheat
+
+ 
+ 
+aobscanmodule(INJECT,ForestVillage.exe,01 41 28 8D 4D 08 E8 34) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+imul, eax,10
+code:
+  add [ecx+28],eax
+  lea ecx,[ebp+08]
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+//code from here till the end of the code will be used to disable the cheat
+INJECT:
+  db 01 41 28 8D 4D 08
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: "ForestVillage.exe"+42B181
+
+"ForestVillage.exe"+42B168: FF D0                 -  call eax
+"ForestVillage.exe"+42B16A: 84 C0                 -  test al,al
+"ForestVillage.exe"+42B16C: 74 16                 -  je ForestVillage.exe+42B184
+"ForestVillage.exe"+42B16E: 53                    -  push ebx
+"ForestVillage.exe"+42B16F: 8D 45 E0              -  lea eax,[ebp-20]
+"ForestVillage.exe"+42B172: 50                    -  push eax
+"ForestVillage.exe"+42B173: 8D 4F 3C              -  lea ecx,[edi+3C]
+"ForestVillage.exe"+42B176: E8 E5 04 CD FF        -  call ForestVillage.exe+FB660
+"ForestVillage.exe"+42B17B: 8B 4D E0              -  mov ecx,[ebp-20]
+"ForestVillage.exe"+42B17E: 8B 43 18              -  mov eax,[ebx+18]
+// ---------- INJECTING HERE ----------
+"ForestVillage.exe"+42B181: 01 41 28              -  add [ecx+28],eax
+"ForestVillage.exe"+42B184: 8D 4D 08              -  lea ecx,[ebp+08]
+// ---------- DONE INJECTING  ----------
+"ForestVillage.exe"+42B187: E8 34 83 BE FF        -  call ForestVillage.exe+134C0
+"ForestVillage.exe"+42B18C: 8B 45 08              -  mov eax,[ebp+08]
+"ForestVillage.exe"+42B18F: 3B C6                 -  cmp eax,esi
+"ForestVillage.exe"+42B191: 75 C4                 -  jne ForestVillage.exe+42B157
+"ForestVillage.exe"+42B193: 8B 1D 60 A5 35 01     -  mov ebx,[ForestVillage.exe+9CA560]
+"ForestVillage.exe"+42B199: 8D 47 3C              -  lea eax,[edi+3C]
+"ForestVillage.exe"+42B19C: 50                    -  push eax
+"ForestVillage.exe"+42B19D: 8D 4F 28              -  lea ecx,[edi+28]
+"ForestVillage.exe"+42B1A0: E8 7B 0E 00 00        -  call ForestVillage.exe+42C020
+"ForestVillage.exe"+42B1A5: 8D 4D E8              -  lea ecx,[ebp-18]
+}
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>4</ID>
+          <Description>"Picked resource multiplier x100 (256)"</Description>
+          <LastState/>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>{ Game   : ForestVillage.exe
+  Version: 
+  Date   : 2020-08-29
+  Author : Suomalainen
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+//code from here to '[DISABLE]' will be used to enable the cheat
+
+ 
+ 
+aobscanmodule(INJECT,ForestVillage.exe,01 41 28 8D 4D 08 E8 34) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+imul, eax,100
+code:
+  add [ecx+28],eax
+  lea ecx,[ebp+08]
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+//code from here till the end of the code will be used to disable the cheat
+INJECT:
+  db 01 41 28 8D 4D 08
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: "ForestVillage.exe"+42B181
+
+"ForestVillage.exe"+42B168: FF D0                 -  call eax
+"ForestVillage.exe"+42B16A: 84 C0                 -  test al,al
+"ForestVillage.exe"+42B16C: 74 16                 -  je ForestVillage.exe+42B184
+"ForestVillage.exe"+42B16E: 53                    -  push ebx
+"ForestVillage.exe"+42B16F: 8D 45 E0              -  lea eax,[ebp-20]
+"ForestVillage.exe"+42B172: 50                    -  push eax
+"ForestVillage.exe"+42B173: 8D 4F 3C              -  lea ecx,[edi+3C]
+"ForestVillage.exe"+42B176: E8 E5 04 CD FF        -  call ForestVillage.exe+FB660
+"ForestVillage.exe"+42B17B: 8B 4D E0              -  mov ecx,[ebp-20]
+"ForestVillage.exe"+42B17E: 8B 43 18              -  mov eax,[ebx+18]
+// ---------- INJECTING HERE ----------
+"ForestVillage.exe"+42B181: 01 41 28              -  add [ecx+28],eax
+"ForestVillage.exe"+42B184: 8D 4D 08              -  lea ecx,[ebp+08]
+// ---------- DONE INJECTING  ----------
+"ForestVillage.exe"+42B187: E8 34 83 BE FF        -  call ForestVillage.exe+134C0
+"ForestVillage.exe"+42B18C: 8B 45 08              -  mov eax,[ebp+08]
+"ForestVillage.exe"+42B18F: 3B C6                 -  cmp eax,esi
+"ForestVillage.exe"+42B191: 75 C4                 -  jne ForestVillage.exe+42B157
+"ForestVillage.exe"+42B193: 8B 1D 60 A5 35 01     -  mov ebx,[ForestVillage.exe+9CA560]
+"ForestVillage.exe"+42B199: 8D 47 3C              -  lea eax,[edi+3C]
+"ForestVillage.exe"+42B19C: 50                    -  push eax
+"ForestVillage.exe"+42B19D: 8D 4F 28              -  lea ecx,[edi+28]
+"ForestVillage.exe"+42B1A0: E8 7B 0E 00 00        -  call ForestVillage.exe+42C020
+"ForestVillage.exe"+42B1A5: 8D 4D E8              -  lea ecx,[ebp-18]
+}
+</AssemblerScript>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+</CheatTable>

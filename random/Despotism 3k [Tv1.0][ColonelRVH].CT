@@ -1,0 +1,798 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="27">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>8278</ID>
+      <Description>"--- Despotism 3k v1.0.3 | Cheat Engine Table v1.0, [2018-11-13] COLONELRVH ---"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>A00000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8274</ID>
+      <Description>"========== - MAIN CHEATS -                    =========="</Description>
+      <Options moAllowManualCollapseAndExpand="1"/>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>FF8000</Color>
+      <GroupHeader>1</GroupHeader>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>9248</ID>
+          <Description>"Get Into Stage Before Activation"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>008080</Color>
+          <GroupHeader>1</GroupHeader>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>8848</ID>
+          <Description>"[Stats]   == Activate: Alt+Insert     | Deactivate: Alt+Del              =="</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" Activated="1" RealAddress="00000000"/>
+          <Color>FF8000</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>9206</ID>
+              <Description>"Activate Individual Script by Ctrl + Numpad (Numerical)"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9200</ID>
+              <Description>"Get Resources Base Address"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Activated="1"/>
+              <Color>808000</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscan(Get_Stats_AOB,C1 48 8B 40 10 48 8B C8 83 39 00 F3) // should be unique
+alloc(newmem,$1000,Get_Stats_AOB)
+
+label(code)
+label(return)
+alloc(Stats_Base,8)
+registersymbol(Stats_Base)
+alloc(Resources_Flag,4)
+registersymbol(Resources_Flag)
+
+Resources_Flag:
+dd 0
+newmem:
+  mov [Stats_Base],rax
+code:
+  mov rax,[rax+10]
+  mov rcx,rax
+  jmp return
+
+Get_Stats_AOB+01:
+  jmp newmem
+  nop
+  nop
+return:
+registersymbol(Get_Stats_AOB)
+
+[DISABLE]
+
+Get_Stats_AOB+01:
+  db 48 8B 40 10 48 8B C8
+
+unregistersymbol(Get_Stats_AOB)
+dealloc(newmem)
+unregistersymbol(Stats_Base)
+dealloc(Stats_Base)
+unregistersymbol(Resources_Flag)
+dealloc(Resources_Flag)
+{
+// ORIGINAL CODE - INJECTION POINT: 1FDD96BD3CF
+
+1FDD96BD3B6: 00 00                          -  add [rax],al
+1FDD96BD3B8: 00 00                          -  add [rax],al
+1FDD96BD3BA: 00 00                          -  add [rax],al
+1FDD96BD3BC: 00 00                          -  add [rax],al
+1FDD96BD3BE: 00 00                          -  add [rax],al
+1FDD96BD3C0: 55                             -  push rbp
+1FDD96BD3C1: 48 8B EC                       -  mov rbp,rsp
+1FDD96BD3C4: 48 83 EC 50                    -  sub rsp,50
+1FDD96BD3C8: 48 89 4D E8                    -  mov [rbp-18],rcx
+1FDD96BD3CC: 48 8B C1                       -  mov rax,rcx
+// ---------- INJECTING HERE ----------
+1FDD96BD3CF: 48 8B 40 10                    -  mov rax,[rax+10]
+1FDD96BD3D3: 48 8B C8                       -  mov rcx,rax
+// ---------- DONE INJECTING  ----------
+1FDD96BD3D6: 83 39 00                       -  cmp dword ptr [rcx],00
+1FDD96BD3D9: F3 0F 10 40 30                 -  movss xmm0,[rax+30]
+1FDD96BD3DE: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1FDD96BD3E2: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1FDD96BD3E6: F3 0F 11 6D F4                 -  movss [rbp-0C],xmm5
+1FDD96BD3EB: F3 0F 10 45 F4                 -  movss xmm0,[rbp-0C]
+1FDD96BD3F0: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1FDD96BD3F4: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1FDD96BD3F8: F3 0F 11 6D F4                 -  movss [rbp-0C],xmm5
+1FDD96BD3FD: F3 0F 10 45 F4                 -  movss xmm0,[rbp-0C]
+}
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Activate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>45</Key>
+                  </Keys>
+                  <ID>0</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Deactivate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>46</Key>
+                  </Keys>
+                  <ID>1</ID>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>17</Key>
+                    <Key>97</Key>
+                  </Keys>
+                  <ID>2</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+              </Hotkeys>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9246</ID>
+                  <Description>"Base Address"</Description>
+                  <LastState Value="3642567152" RealAddress="1FDDC1DDF60"/>
+                  <VariableType>4 Bytes</VariableType>
+                  <Address>Stats_Base</Address>
+                  <Offsets>
+                    <Offset>0</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9226</ID>
+                  <Description>"power"</Description>
+                  <LastState Value="-107.2069092" RealAddress="1FDDBF0E030"/>
+                  <VariableType>Float</VariableType>
+                  <Address>Stats_Base</Address>
+                  <Offsets>
+                    <Offset>30</Offset>
+                    <Offset>10</Offset>
+                  </Offsets>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9228</ID>
+                  <Description>"food"</Description>
+                  <LastState Value="60" RealAddress="1FDDC1DDF88"/>
+                  <VariableType>Float</VariableType>
+                  <Address>Stats_Base</Address>
+                  <Offsets>
+                    <Offset>28</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9211</ID>
+              <Description>"Unlimited Human Energy"</Description>
+              <LastState Activated="1"/>
+              <Color>808000</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{ Game   : Despotism3k.exe
+  Version: 
+  Date   : 2018-11-13
+  Author : ColonelRVH
+
+  This script does blah blah blah
+}
+
+/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscan(Get_HumanEnergy_AOB,18 48 8B C8 83 39 00 F3 0F 10 40 3C) // should be unique
+alloc(newmem,$1000,Get_HumanEnergy_AOB)
+
+label(code)
+label(return)
+
+newmem:
+  movss xmm0,[rax+40]
+  movss [rax+3C],xmm0
+code:
+  movss xmm0,[rax+3C]
+  jmp return
+
+Get_HumanEnergy_AOB+07:
+  jmp newmem
+return:
+registersymbol(Get_HumanEnergy_AOB)
+
+[DISABLE]
+
+Get_HumanEnergy_AOB+07:
+  db F3 0F 10 40 3C
+
+unregistersymbol(Get_HumanEnergy_AOB)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: 1FDD96A3196
+
+1FDD96A3171: 48 8B EC                       -  mov rbp,rsp
+1FDD96A3174: 48 83 EC 30                    -  sub rsp,30
+1FDD96A3178: 48 89 75 F8                    -  mov [rbp-08],rsi
+1FDD96A317C: 48 8B F1                       -  mov rsi,rcx
+1FDD96A317F: 48 8B 46 18                    -  mov rax,[rsi+18]
+1FDD96A3183: 48 85 C0                       -  test rax,rax
+1FDD96A3186: 0F 84 CF 01 00 00              -  je Despotism:HealthBar:DefaultUpdate+1eb
+1FDD96A318C: 48 8B 46 18                    -  mov rax,[rsi+18]
+1FDD96A3190: 48 8B C8                       -  mov rcx,rax
+1FDD96A3193: 83 39 00                       -  cmp dword ptr [rcx],00
+// ---------- INJECTING HERE ----------
+1FDD96A3196: F3 0F 10 40 3C                 -  movss xmm0,[rax+3C]
+// ---------- DONE INJECTING  ----------
+1FDD96A319B: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1FDD96A319F: F3 0F 10 48 40                 -  movss xmm1,[rax+40]
+1FDD96A31A4: F3 0F 5A C9                    -  cvtss2sd xmm1,xmm1
+1FDD96A31A8: F2 0F 5E C1                    -  divsd xmm0,xmm1
+1FDD96A31AC: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1FDD96A31B0: F3 0F 11 6D F0                 -  movss [rbp-10],xmm5
+1FDD96A31B5: F3 0F 10 45 F0                 -  movss xmm0,[rbp-10]
+1FDD96A31BA: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1FDD96A31BE: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1FDD96A31C2: F3 0F 11 6D F4                 -  movss [rbp-0C],xmm5
+}
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Activate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>45</Key>
+                  </Keys>
+                  <ID>0</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Deactivate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>46</Key>
+                  </Keys>
+                  <ID>1</ID>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>17</Key>
+                    <Key>98</Key>
+                  </Keys>
+                  <ID>2</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9210</ID>
+              <Description>"Unlimited Power Meter"</Description>
+              <LastState/>
+              <Color>808000</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{ Game   : Despotism3k.exe
+  Version: 
+  Date   : 2018-11-13
+  Author : ColonelRVH
+
+  This script does blah blah blah
+}
+
+/*===============================
+Cheat Script by ColonelRVH
+
+Please Support my work at:
+  https://www.patreon.com/ColonelRVH
+
+Visit my website at:
+  https://www.thecheatscript.com
+- For latest content, better index &amp; easy to find game cheat that you need.
+
+● You can alter it as your own discretion, but you must keep my credits.
+● Any distributions of my tables &amp; codes are unadvised.
+
+===============================*/
+[ENABLE]
+
+aobscan(Get_PowerMeter_AOB,D8 F3 0F 10 46 44) // should be unique
+alloc(newmem,$1000,Get_PowerMeter_AOB)
+
+label(code)
+label(return)
+
+newmem:
+  movss xmm0,[rsi+34]
+  movss [rsi+44],xmm0
+code:
+  movss xmm0,[rsi+44]
+  jmp return
+
+Get_PowerMeter_AOB+01:
+  jmp newmem
+return:
+registersymbol(Get_PowerMeter_AOB)
+
+[DISABLE]
+
+Get_PowerMeter_AOB+01:
+  db F3 0F 10 46 44
+
+unregistersymbol(Get_PowerMeter_AOB)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: 1FDD968063A
+
+1FDD96805FF: 48 8D AD 00 00 00 00           -  lea rbp,[rbp+00000000]
+1FDD9680606: 49 BB 20 97 88 D6 FD 01 00 00  -  mov r11,Despotism:EventManager:get_Instance
+1FDD9680610: 41 FF D3                       -  call r11
+1FDD9680613: 48 89 45 E0                    -  mov [rbp-20],rax
+1FDD9680617: 48 B9 B0 B0 F5 E2 FD 01 00 00  -  mov rcx,000001FDE2F5B0B0
+1FDD9680621: 48 8D 64 24 00                 -  lea rsp,[rsp+00]
+1FDD9680626: 49 BB A0 0F E3 C5 FD 01 00 00  -  mov r11,System:Object:__icall_wrapper_ves_icall_object_new_specific
+1FDD9680630: 41 FF D3                       -  call r11
+1FDD9680633: 48 8B C8                       -  mov rcx,rax
+1FDD9680636: 48 89 4D D8                    -  mov [rbp-28],rcx
+// ---------- INJECTING HERE ----------
+1FDD968063A: F3 0F 10 46 44                 -  movss xmm0,[rsi+44]
+// ---------- DONE INJECTING  ----------
+1FDD968063F: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1FDD9680643: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1FDD9680647: F3 0F 11 68 10                 -  movss [rax+10],xmm5
+1FDD968064C: F3 0F 10 46 34                 -  movss xmm0,[rsi+34]
+1FDD9680651: F3 0F 5A C0                    -  cvtss2sd xmm0,xmm0
+1FDD9680655: F3 0F 10 4E 38                 -  movss xmm1,[rsi+38]
+1FDD968065A: F3 0F 5A C9                    -  cvtss2sd xmm1,xmm1
+1FDD968065E: F2 0F 58 C1                    -  addsd xmm0,xmm1
+1FDD9680662: F2 0F 5A E8                    -  cvtsd2ss xmm5,xmm0
+1FDD9680666: F3 0F 11 6D F4                 -  movss [rbp-0C],xmm5
+}
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Activate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>45</Key>
+                  </Keys>
+                  <ID>0</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Deactivate</Action>
+                  <Keys>
+                    <Key>18</Key>
+                    <Key>46</Key>
+                  </Keys>
+                  <ID>1</ID>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>17</Key>
+                    <Key>99</Key>
+                  </Keys>
+                  <ID>2</ID>
+                  <ActivateSound>Activate</ActivateSound>
+                  <DeactivateSound>Deactivate</DeactivateSound>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>117</ID>
+          <Description>"[Misc.][!]"</Description>
+          <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+          <LastState Value="" Activated="1" RealAddress="00000000"/>
+          <Color>0000FF</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>9107</ID>
+              <Description>"Proceed With Cautions! This section is for Advanced User Only"</Description>
+              <Options moHideChildren="1" moDeactivateChildrenAsWell="1"/>
+              <LastState Value="" Activated="1" RealAddress="00000000"/>
+              <Color>0000FF</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>8266</ID>
+              <Description>"[Backups][Unused]"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" Activated="1" RealAddress="00000000"/>
+              <Color>C0C0C0</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9247</ID>
+                  <Description>"power meter"</Description>
+                  <LastState Value="-107.2108765" RealAddress="1FDDBF0E044"/>
+                  <VariableType>Float</VariableType>
+                  <Address>Stats_Base</Address>
+                  <Offsets>
+                    <Offset>44</Offset>
+                    <Offset>10</Offset>
+                  </Offsets>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>8435</ID>
+              <Description>"[Obsolete][Buggy]"</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>C0C0C0</Color>
+              <GroupHeader>1</GroupHeader>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>9105</ID>
+          <Description>"&lt;-[HERE] INSTRUCTIONS | Tick the left square □ of this line to view -"</Description>
+          <Options moHideChildren="1"/>
+          <LastState Value="" Activated="1" RealAddress="00000000"/>
+          <Color>008080</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>9110</ID>
+              <Description>"- Basic -"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>008080</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9121</ID>
+                  <Description>"Choose Yes on the table opening so it can detect the game automatically"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9111</ID>
+                  <Description>"- To Activate a Cheat"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>9114</ID>
+                      <Description>"1. Follow the [Activate] instructions"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>008080</Color>
+                      <GroupHeader>1</GroupHeader>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>9113</ID>
+                      <Description>"2. Tick on the square □ next to it"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>008080</Color>
+                      <GroupHeader>1</GroupHeader>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9112</ID>
+              <Description>"- Intermediate - "</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>008080</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9106</ID>
+                  <Description>"- For God Mode &amp; Instant Kill you must change the value to "Enabled" unless there's none"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9116</ID>
+                  <Description>"- You can find old cheats in [Misc.] for older version, in rare cases"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9117</ID>
+              <Description>"- Advanced | Master - "</Description>
+              <Options moHideChildren="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>008080</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9118</ID>
+                  <Description>"- All my codes are easy to understand and straightforward"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9119</ID>
+                  <Description>"- You can alter it as your own discretion, but you must keep my credits"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9120</ID>
+                  <Description>"- Any distributions of my tables &amp; codes are unadvised"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>008080</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>9115</ID>
+              <Description>"References"</Description>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>808000</Color>
+              <GroupHeader>1</GroupHeader>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>9082</ID>
+                  <Description>"- [Activate: To Activate this cheat you must do this action first] -"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>808000</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>9083</ID>
+                  <Description>"- [Update: To Update/Get the cheat's effects you must do this action first] -"</Description>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>808000</Color>
+                  <GroupHeader>1</GroupHeader>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8265</ID>
+      <Description>"========== - SPECIAL THANKS -               =========="</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8849</ID>
+      <Description>"========== - CHANGES | NOTES -             =========="</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8908</ID>
+      <Description>"- Please support my work at -"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>8909</ID>
+      <Description>"https://www.patreon.com/ColonelRVH"</Description>
+      <LastState Value="" RealAddress="00000000"/>
+      <Color>808000</Color>
+      <GroupHeader>1</GroupHeader>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols>
+    <SymbolEntry>
+      <Name>BLucre</Name>
+      <Address>015C0010</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>BHP</Name>
+      <Address>015C0000</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>GetHP</Name>
+      <Address>463A7445</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>GetLucre</Name>
+      <Address>463A9B27</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>IgnoreMana</Name>
+      <Address>463C8647</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>BaseGold</Name>
+      <Address>02680000</Address>
+    </SymbolEntry>
+    <SymbolEntry>
+      <Name>GetGold</Name>
+      <Address>00F6FCC9</Address>
+    </SymbolEntry>
+  </UserdefinedSymbols>
+  <Structures StructVersion="2">
+    <Structure Name="P" AutoFill="0" AutoCreate="1" DefaultHex="0" AutoDestroy="0" DoNotSaveLocal="0" RLECompression="1" AutoCreateStructsize="4096">
+      <Elements>
+        <Element Offset="16" Vartype="Pointer" Bytesize="8" Description="lossTween" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="24" Vartype="Pointer" Bytesize="8" Description="lossTween2" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="32" Vartype="Pointer" Bytesize="8" Description="lossTween3" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="40" Vartype="Pointer" Bytesize="8" Description="addOverTimeTween" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="48" Vartype="Float" Bytesize="4" Description="power" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="52" Vartype="Float" Bytesize="4" Description="maxBase" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="56" Vartype="Float" Bytesize="4" Description="maxBonus" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="60" Vartype="Float" Bytesize="4" Description="lossPerPeriod" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="64" Vartype="Float" Bytesize="4" Description="lossMult" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="68" Vartype="Float" Bytesize="4" Description="tweenedPower" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="72" Vartype="Float" Bytesize="4" Description="tweenedLoss" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="76" Vartype="Float" Bytesize="4" Description="tweenDiff" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="80" Vartype="Float" Bytesize="4" Description="tweenDuration" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="84" Vartype="Float" Bytesize="4" Description="tweenAcc" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="88" Vartype="Float" Bytesize="4" Description="tweenPosition" DisplayMethod="Unsigned Integer"/>
+      </Elements>
+    </Structure>
+    <Structure Name="Game" AutoFill="0" AutoCreate="1" DefaultHex="0" AutoDestroy="0" DoNotSaveLocal="0" RLECompression="1" AutoCreateStructsize="4096">
+      <Elements>
+        <Element Offset="0" Vartype="Pointer" Bytesize="8" DisplayMethod="Unsigned Integer">
+          <Structure Name="Game" AutoFill="0" AutoCreate="1" DefaultHex="0" AutoDestroy="0" DoNotSaveLocal="0" RLECompression="1" AutoCreateStructsize="4096">
+            <Elements>
+              <Element Offset="16" Vartype="Pointer" Bytesize="8" Description="p" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="24" Vartype="Pointer" Bytesize="8" Description="tutorialProgress" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="32" Vartype="Byte" Bytesize="1" Description="startedFromSave" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="36" Vartype="4 Bytes" Bytesize="4" Description="powerBonusPercent" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="40" Vartype="Float" Bytesize="4" Description="food" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="44" Vartype="Float" Bytesize="4" Description="foodMax" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="48" Vartype="Float" Bytesize="4" Description="timer" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="52" Vartype="Float" Bytesize="4" Description="period" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="56" Vartype="4 Bytes" Bytesize="4" Description="PeriodsElapsed" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="60" Vartype="4 Bytes" Bytesize="4" Description="Ticks" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="64" Vartype="Byte" Bytesize="1" Description="gameEnded" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="68" Vartype="Float" Bytesize="4" Description="shotCost" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="72" Vartype="Float" Bytesize="4" Description="shotCooldown" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="76" Vartype="Float" Bytesize="4" Description="shotCoodownLeft" DisplayMethod="Unsigned Integer"/>
+            </Elements>
+          </Structure>
+        </Element>
+        <Element Offset="16" Vartype="Pointer" Bytesize="8" Description="p" DisplayMethod="Unsigned Integer">
+          <Structure Name="P" AutoFill="0" AutoCreate="1" DefaultHex="0" AutoDestroy="0" DoNotSaveLocal="0" RLECompression="1" AutoCreateStructsize="4096">
+            <Elements>
+              <Element Offset="0" Vartype="Pointer" Bytesize="8" DisplayMethod="Unsigned Integer">
+                <Structure Name="P" AutoFill="0" AutoCreate="1" DefaultHex="0" AutoDestroy="0" DoNotSaveLocal="0" RLECompression="1" AutoCreateStructsize="4096">
+                  <Elements>
+                    <Element Offset="16" Vartype="Pointer" Bytesize="8" Description="lossTween" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="24" Vartype="Pointer" Bytesize="8" Description="lossTween2" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="32" Vartype="Pointer" Bytesize="8" Description="lossTween3" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="40" Vartype="Pointer" Bytesize="8" Description="addOverTimeTween" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="48" Vartype="Float" Bytesize="4" Description="power" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="52" Vartype="Float" Bytesize="4" Description="maxBase" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="56" Vartype="Float" Bytesize="4" Description="maxBonus" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="60" Vartype="Float" Bytesize="4" Description="lossPerPeriod" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="64" Vartype="Float" Bytesize="4" Description="lossMult" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="68" Vartype="Float" Bytesize="4" Description="tweenedPower" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="72" Vartype="Float" Bytesize="4" Description="tweenedLoss" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="76" Vartype="Float" Bytesize="4" Description="tweenDiff" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="80" Vartype="Float" Bytesize="4" Description="tweenDuration" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="84" Vartype="Float" Bytesize="4" Description="tweenAcc" DisplayMethod="Unsigned Integer"/>
+                    <Element Offset="88" Vartype="Float" Bytesize="4" Description="tweenPosition" DisplayMethod="Unsigned Integer"/>
+                  </Elements>
+                </Structure>
+              </Element>
+              <Element Offset="16" Vartype="Pointer" Bytesize="8" Description="lossTween" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="24" Vartype="Pointer" Bytesize="8" Description="lossTween2" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="32" Vartype="Pointer" Bytesize="8" Description="lossTween3" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="40" Vartype="Pointer" Bytesize="8" Description="addOverTimeTween" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="48" Vartype="Float" Bytesize="4" Description="power" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="52" Vartype="Float" Bytesize="4" Description="maxBase" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="56" Vartype="Float" Bytesize="4" Description="maxBonus" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="60" Vartype="Float" Bytesize="4" Description="lossPerPeriod" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="64" Vartype="Float" Bytesize="4" Description="lossMult" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="68" Vartype="Float" Bytesize="4" Description="tweenedPower" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="72" Vartype="Float" Bytesize="4" Description="tweenedLoss" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="76" Vartype="Float" Bytesize="4" Description="tweenDiff" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="80" Vartype="Float" Bytesize="4" Description="tweenDuration" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="84" Vartype="Float" Bytesize="4" Description="tweenAcc" DisplayMethod="Unsigned Integer"/>
+              <Element Offset="88" Vartype="Float" Bytesize="4" Description="tweenPosition" DisplayMethod="Unsigned Integer"/>
+            </Elements>
+          </Structure>
+        </Element>
+        <Element Offset="24" Vartype="Pointer" Bytesize="8" Description="tutorialProgress" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="32" Vartype="Byte" Bytesize="1" Description="startedFromSave" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="36" Vartype="4 Bytes" Bytesize="4" Description="powerBonusPercent" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="40" Vartype="Float" Bytesize="4" Description="food" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="44" Vartype="Float" Bytesize="4" Description="foodMax" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="48" Vartype="Float" Bytesize="4" Description="timer" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="52" Vartype="Float" Bytesize="4" Description="period" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="56" Vartype="4 Bytes" Bytesize="4" Description="PeriodsElapsed" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="60" Vartype="4 Bytes" Bytesize="4" Description="Ticks" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="64" Vartype="Byte" Bytesize="1" Description="gameEnded" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="68" Vartype="Float" Bytesize="4" Description="shotCost" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="72" Vartype="Float" Bytesize="4" Description="shotCooldown" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="76" Vartype="Float" Bytesize="4" Description="shotCoodownLeft" DisplayMethod="Unsigned Integer"/>
+      </Elements>
+    </Structure>
+    <Structure Name="Human" AutoFill="0" AutoCreate="1" DefaultHex="0" AutoDestroy="0" DoNotSaveLocal="0" RLECompression="1" AutoCreateStructsize="4096">
+      <Elements>
+        <Element Offset="16" Vartype="Pointer" Bytesize="8" Description="device" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="24" Vartype="Pointer" Bytesize="8" Description="destination" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="32" Vartype="Pointer" Bytesize="8" Description="siamPair" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="40" Vartype="Pointer" Bytesize="8" Description="view" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="48" Vartype="Float" Bytesize="4" Description="reactorProgress" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="52" Vartype="Byte" Bytesize="1" Description="falling" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="53" Vartype="Byte" Bytesize="1" Description="_markedToDie" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="54" Vartype="Byte" Bytesize="1" Description="toAdd" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="55" Vartype="Byte" Bytesize="1" Description="toRemove" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="56" Vartype="Byte" Bytesize="1" Description="inTransit" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="57" Vartype="Byte" Bytesize="1" Description="ready" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="58" Vartype="Byte" Bytesize="1" Description="secondTwin" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="60" Vartype="Float" Bytesize="4" Description="currentHealth" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="64" Vartype="Float" Bytesize="4" Description="maxHealth" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="68" Vartype="4 Bytes" Bytesize="4" Description="quest" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="72" Vartype="Float" Bytesize="4" Description="effectiveness" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="76" Vartype="Float" Bytesize="4" Description="reactorPowerBonus" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="80" Vartype="Float" Bytesize="4" Description="timeToJump" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="84" Vartype="4 Bytes" Bytesize="4" Description="deviceAsInt" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="88" Vartype="4 Bytes" Bytesize="4" Description="destinationAsInt" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="92" Vartype="4 Bytes" Bytesize="4" Description="questAsInt" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="96" Vartype="4 Bytes" Bytesize="4" Description="serializationIndex" DisplayMethod="Unsigned Integer"/>
+        <Element Offset="100" Vartype="4 Bytes" Bytesize="4" Description="serializedSiamPair" DisplayMethod="Unsigned Integer"/>
+      </Elements>
+    </Structure>
+  </Structures>
+  <Comments>If you want to support, Please consider become my patron at:
+----------------------
+https://www.patreon.com/ColonelRVH
+----------------------
+It would be a great help for me to cover my living expenses so I can focus on making  &amp; improving cheat for you. 
+----------------------
+© ColonelRVH, 2017
+</Comments>
+  <LuaScript>attachlist=getAutoAttachList()
+stringlist_add(attachlist,"Despotism3k.exe");
+</LuaScript>
+</CheatTable>

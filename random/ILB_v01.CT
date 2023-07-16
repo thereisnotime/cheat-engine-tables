@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="34">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>4</ID>
+      <Description>"gold x10"</Description>
+      <LastState Activated="1"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : ILB.exe
+  Version: 01
+  Date   : 2021-06-02
+  Author : Rinkashi Mikito
+
+  Gold gained multiplier
+}
+
+[ENABLE]
+
+aobscanmodule(GOLD_INJECT,ILB.exe,01 79 68 BA 00 E1 F5 05) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  imul edi, #10
+  add [ecx+68],edi
+  mov edx,05F5E100
+  jmp return
+
+GOLD_INJECT:
+  jmp newmem
+  nop 3
+return:
+registersymbol(GOLD_INJECT)
+
+[DISABLE]
+
+GOLD_INJECT:
+  db 01 79 68 BA 00 E1 F5 05
+
+unregistersymbol(GOLD_INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: ILB.exe+F8A00
+
+ILB.exe+F89E1: B9 00 0D 91 00     - mov ecx,ILB.exe+180D00
+ILB.exe+F89E6: EB A4              - jmp ILB.exe+F898C
+ILB.exe+F89E8: 8D 88 E8 0A 00 00  - lea ecx,[eax+00000AE8]
+ILB.exe+F89EE: 85 C9              - test ecx,ecx
+ILB.exe+F89F0: 75 0E              - jne ILB.exe+F8A00
+ILB.exe+F89F2: 51                 - push ecx
+ILB.exe+F89F3: 51                 - push ecx
+ILB.exe+F89F4: 68 88 33 00 00     - push 00003388
+ILB.exe+F89F9: B9 C8 06 93 00     - mov ecx,ILB.exe+1A06C8
+ILB.exe+F89FE: EB 8C              - jmp ILB.exe+F898C
+// ---------- INJECTING HERE ----------
+ILB.exe+F8A00: 01 79 68           - add [ecx+68],edi
+// ---------- DONE INJECTING  ----------
+ILB.exe+F8A03: BA 00 E1 F5 05     - mov edx,05F5E100
+ILB.exe+F8A08: 8B 41 68           - mov eax,[ecx+68]
+ILB.exe+F8A0B: 3B C2              - cmp eax,edx
+ILB.exe+F8A0D: 0F 4F C2           - cmovg eax,edx
+ILB.exe+F8A10: 89 41 68           - mov [ecx+68],eax
+ILB.exe+F8A13: 84 DB              - test bl,bl
+ILB.exe+F8A15: 0F 84 D5 00 00 00  - je ILB.exe+F8AF0
+ILB.exe+F8A1B: 8B 0D 0C 03 99 00  - mov ecx,[ILB.exe+20030C]
+ILB.exe+F8A21: 33 C0              - xor eax,eax
+ILB.exe+F8A23: 85 C9              - test ecx,ecx
+}
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>6</ID>
+      <Description>"crystal x10"</Description>
+      <LastState Activated="1"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : ILB.exe
+  Version: 
+  Date   : 2021-06-02
+  Author : Rinkashi Mikito
+
+  Crystal gained multiplier
+}
+
+[ENABLE]
+
+aobscanmodule(CRYSTAL_INJECT,ILB.exe,01 51 6C 8B C8) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  imul edx,#10
+  add [ecx+6C],edx
+  mov ecx,eax
+  jmp return
+
+CRYSTAL_INJECT:
+  jmp newmem
+return:
+registersymbol(CRYSTAL_INJECT)
+
+[DISABLE]
+
+CRYSTAL_INJECT:
+  db 01 51 6C 8B C8
+
+unregistersymbol(CRYSTAL_INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: ILB.exe+74FED
+
+ILB.exe+74FCF: EB C2                    - jmp ILB.exe+74F93
+ILB.exe+74FD1: 8D 88 E8 0A 00 00        - lea ecx,[eax+00000AE8]
+ILB.exe+74FD7: 85 C9                    - test ecx,ecx
+ILB.exe+74FD9: 75 0E                    - jne ILB.exe+74FE9
+ILB.exe+74FDB: 51                       - push ecx
+ILB.exe+74FDC: 51                       - push ecx
+ILB.exe+74FDD: 68 EA 36 00 00           - push 000036EA
+ILB.exe+74FE2: B9 C8 06 93 00           - mov ecx,ILB.exe+1A06C8
+ILB.exe+74FE7: EB AA                    - jmp ILB.exe+74F93
+ILB.exe+74FE9: 8B 54 24 24              - mov edx,[esp+24]
+// ---------- INJECTING HERE ----------
+ILB.exe+74FED: 01 51 6C                 - add [ecx+6C],edx
+// ---------- DONE INJECTING  ----------
+ILB.exe+74FF0: 8B C8                    - mov ecx,eax
+ILB.exe+74FF2: E8 09 22 08 00           - call ILB.exe+F7200
+ILB.exe+74FF7: F3 0F 10 0D E0 73 94 00  - movss xmm1,[ILB.exe+1B73E0]
+ILB.exe+74FFF: B9 45 00 00 00           - mov ecx,00000045
+ILB.exe+75004: E8 57 15 F9 FF           - call ILB.exe+6560
+ILB.exe+75009: 8B CB                    - mov ecx,ebx
+ILB.exe+7500B: E8 70 91 FF FF           - call ILB.exe+6E180
+ILB.exe+75010: B0 01                    - mov al,01
+ILB.exe+75012: 5F                       - pop edi
+ILB.exe+75013: 5E                       - pop esi
+}
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>7</ID>
+      <Description>"compost x10"</Description>
+      <LastState Activated="1"/>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : ILB.exe
+  Version: 
+  Date   : 2021-06-02
+  Author : Rinkashi Mikito
+
+  Compost gained multiplier
+}
+
+[ENABLE]
+
+aobscanmodule(COMPOST_INJECT,ILB.exe,01 71 70 8B C8) // should be unique
+alloc(newmem,$1000)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  imul esi,#10
+  add [ecx+70],esi
+  mov ecx,eax
+  jmp return
+
+COMPOST_INJECT:
+  jmp newmem
+return:
+registersymbol(COMPOST_INJECT)
+
+[DISABLE]
+
+COMPOST_INJECT:
+  db 01 71 70 8B C8
+
+unregistersymbol(COMPOST_INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: ILB.exe+F9EC4
+
+ILB.exe+F9EA5: B9 00 0D 91 00           - mov ecx,ILB.exe+180D00
+ILB.exe+F9EAA: EB B8                    - jmp ILB.exe+F9E64
+ILB.exe+F9EAC: 8D 88 E8 0A 00 00        - lea ecx,[eax+00000AE8]
+ILB.exe+F9EB2: 85 C9                    - test ecx,ecx
+ILB.exe+F9EB4: 75 0E                    - jne ILB.exe+F9EC4
+ILB.exe+F9EB6: 51                       - push ecx
+ILB.exe+F9EB7: 51                       - push ecx
+ILB.exe+F9EB8: 68 0D 37 00 00           - push 0000370D
+ILB.exe+F9EBD: B9 C8 06 93 00           - mov ecx,ILB.exe+1A06C8
+ILB.exe+F9EC2: EB A0                    - jmp ILB.exe+F9E64
+// ---------- INJECTING HERE ----------
+ILB.exe+F9EC4: 01 71 70                 - add [ecx+70],esi
+// ---------- DONE INJECTING  ----------
+ILB.exe+F9EC7: 8B C8                    - mov ecx,eax
+ILB.exe+F9EC9: E8 32 D3 FF FF           - call ILB.exe+F7200
+ILB.exe+F9ECE: F3 0F 10 0D E0 73 94 00  - movss xmm1,[ILB.exe+1B73E0]
+ILB.exe+F9ED6: B9 31 00 00 00           - mov ecx,00000031
+ILB.exe+F9EDB: 5E                       - pop esi
+ILB.exe+F9EDC: E9 7F C6 F0 FF           - jmp ILB.exe+6560
+ILB.exe+F9EE1: CC                       - int 3 
+ILB.exe+F9EE2: CC                       - int 3 
+ILB.exe+F9EE3: CC                       - int 3 
+ILB.exe+F9EE4: CC                       - int 3 
+}
+</AssemblerScript>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+  <Signature>
+    <SignedHash HashSize="132">0f+sk=xHQHft:x6M-N=W4i!9t9ZGN=3=MnWD++(o3.@n=Iz5q:4T+RtPVqQ-n!!]je-RbSUoB(O(w0?eRo4J(;8w7iRh#I1Gm1$kAO3.K^mYbV9.#2iSlv60we$#nA:OEpaorTb^NE:MQQ}/CK*X!ffm3S}t2!LG$q/2m</SignedHash>
+    <PublicKey Size="5224">5dZ*HQ*y;zWn;@ic[2$?VR;y}Zj1l_07XMnH9]OY00EwX]^Pj[X8h=rJ-nc!593pV2pz!FBt9Lm$}{7z8XBw9a.ePGwGuDdObsYcT#B=H)mkui$CyLy:c8t=%DT7#WNgvy]_jlI$G8G*.[r@WZIN6dJ_^R41Q9Ky%2#otSV[U]U/+#GVKf#^0f,j#[+XBUGl*#KHUZhS!rFsbB=C4S004/lPDc$28VUda01Zh/L^b0%0AK)B02l{Y0001ri+LgK000SaNLh0L01FcU01FcV0GgZ[000u]Nkl/ZScPp[TWnj$nV#FZ?Q@yZi:ss8W/?v4iliv/#(H?ucHl*Dcj2Pmmm,DlK)/^J:stA(l$S2h%;v!0zW1R)vxt,2u8SsJC(+%LD_Q=wjugkSql;8vO.MzHC)r%N%s!0GD)TL^0eLuc(OhJ$-}WIAPpGOY002VB7y_$R00/$fs*j.ARSh77BuVmpU);Xel?$Phs.Z1J2%,OR-TA*nLkIx=oOAGKKnM^,j4^qRgphNN5E2t*S=)[HPQw[B$))bHu]J7!QrC3;06,TCkAD2*AMfnsv*Rm+D[5R-=!=urS9+JURaGq%3awV[,[]f+J3Epj;AH=FMhJPH:Xu]N*;a}sICkvV]uaKmpj[TRe0Zw2H*UBC@^F1#5kl_2][8-Xz6$@dg?WVblZv7ylSu%8ZQHKvAz?.7W1Mrwn0UJ5+pB0H(JDxpPLL!b%d(u?yTk5U[-Kf*lv0F^c;cjNI5-3%007[jyEi3CqLg{]C%!*W=6an6R.v^V.m03.3=Yn0qpGR}0*bAa6OBd=LI40oQ832hfe2yObtfmMDwT?oc@G2:0ED33=zpb(IF9Fg(1Uod#;Sa5e,waMx7(MrB{!;Lo?ljN=RML7oN9F,ePfdtV=qcagi[jWcWSj-wN_wqyV-0=k@{)2m/S^OdY_9euozvZIQXmY]-Bi#mJcEe0HBm_(ShC/jJd8W-q[pQJ2@SIw@u3[i/V]j)]n!L6h(#Z,Meg7]clDQ2ts*M]gK^B0q7n!XN+AzbX@Aka1J1ZilQirlFQ]=A.OG+]Nc18,[;?5OE2y3R_/u}/tvvfmGUD?5MvC9J(3dITIqS7KpG+0AdJW2]Fvhg6?ef@$aUTB[6}ZJFizY-2u*2+DT+RI=jTH_PzV4JkH?;KgbP3jh3SG;.?F;g:9yBd1ONyIgS*%C6BCowYK.)yF{l6Io$gE9whbY=dGjVAQrC,a/KiGGrR^bb01f}kgfPZbRc$t#nx=s},uz@,%U{MoSS(6sE{EuQuhn.Uwo9dAr)-l4b(T:D7{3Q?e5RC(E(0ArDFc90N)qs}9t@]!6s5Z+.SL8GCx93j7}q]8/MBu(0wI)nNn8N^i9}^P-rt]-xJq2R%n}yJ0MTePl{hdH6+HMkp-[m(V}+okmbtUDv$L}v[wL:z%{v8F#;dCo=Urd85JCW.X(Qk+z%*%lNTbmZFQJsGsv3^SP1E#!pD^K*J=)kk;#x7w,uIxJ33.A)?7]CXQh9H0w@S.Y%O%[.=Lk8YOq[GUbMX#IlEj@MyR9gSfKN.o?l}vi$K$@52LgeKiAezX#Kgqf,S/g#M5oh/Mx(nRan5VC8e@/dsdS?}ctRI1LP#hSGEGy^v=rc.Vs38k(Ye5*czk/%duwY.5YYGiqeqXXQYnOxW!aKMg25nTJQNB-2rSDAg,lduUDGtjaTG-X09cll(1OZ45R3x:T*uMIFpN):]D9@XVYj#(*Pk+6t5ho0;$P@f^m[HHK@EcL2q8t0DW$/sP=qIZtEKC?po0h(2jg,}8jVJ=gV{I6ys$8jF]k}D4u]^YbB_L;r;CdW;GY8!M-}/q78e)?+^nDKVe7%jrD;Wh%Y:{bnHk%+Ip?u0*3*tqvpG9E8.OJg0231v.[ZYG+L4trj4[PSqackKV{?bKl2ohJgpW(-Bq$t/#VpJ2;FF6A9VM6qgTY87a[7#SSTqIzux-0isqF7pTCFw$_KAWv7a:6eiX:%0AptgouvV*?qtU+.K1!*9%Ll/l2nB.d-{eXlGn^kFvMQCz:H^lN$Qv8=ecxw^3woBz/+}7]L=RImho]5f8Dk3z3xp7no(=tMc$[h_xVShlFwkf.e4kQEbzSf2;G6HqZnq7=:yW:?TFvu3N-3pG5DEY((e-#O(Urx7L=#6QD2lSSwuTUrW!Z7.R.z[Eo_}IXBod*eNKq8e@DN79T@9iEx}@qe1UyP22Z/*,kD!C5X{.$N0*b_.DX51KN}KcudR;wv+LB6h.gR9)t=g7QWtygKTg77Wx4-:?LTG1a2ST^Ly#pb/di4qbpj0Xep@=dC0*c;^C:kL/rxT0C;h-$NWsFfFa{tR{r)-.L?W3!S[wR40YT)_zd!{j1vYgB17-Np)lu9MTFsjw,GtWFTG(BSuFilfcRns)s!Jy,fs.UZ%R8](F,(p}v?U2[7EXxwKn3_d?7I%9;A*orDX.Df60KQKx%K]w9ZdmPVIfRhN@g/BHvMfoGrfDMg3qU6)CT]xm]Q)#N*?n6?,Ccw6wNg!_*7P)GFPF:?u0Q_$$=ff)ot,)spzFA/;jnY:(N)5)FpP@AFTV21E0j^-[cTqz829z148zcMy.v+=1CAd+=z)QdT$-Aitkr6z)jJ6pcel8.wVA^SHR]LBcP$41jE.@99ouL$]uh3,0G(;!Uauz-2{MyX%hGlI%e!BmK7E:{_Ki2{]q_I@d3{9jcz9T78yP5FHxxm{aU9Ymh}S9OK_:Bh2T;Fy7z^!P@Z9)I*6q0dlB80pl+wd-FcVQsQIyfqk;TOtYuBzVE/SPU*af7m.0JHL@.V%!pwz#8]{W${]ggzk.[}tegy]hSlW*HH:GxlYi4!NTUAs0iGSX-=78e*u]3F5cJrKgDo[b1[m8YM6]m@O[!!T}#xbeq7^t.vRIP,h[^1yXq5Lkf!1IOLir;d#_/?W8^0_NsPLen%(*6D1dhYlTb9LF$;cq}RRUj6E.L=T)QH=Cg2)r$NVW}Lp-5xJW(:KDTENL3Y*%1KxLcO$gOuOcgP(VApblxmt52n5;gb};FN9UV1I@XSo_g,d]54vUo3Y(NH,ro-WIUtizq;e^QX^$r!jIDh]UrfL8ApKr_1(*K%@y6*QA]t0oEFTM2A=Ck6tZ?i*F]tb0uqA0}.F]LaOiqhNLn?Xj_$0s6?NF*,5I-Soy_2!IvB7_bGD9R3g!R@2M.=6$j_HcqMAS{km$3-}+@2.yB#;PZ$/)yl#olGXH*v93[!B9w1*axI8@zzFubIw2b.D4Td[St5$C1RFs,rIA$fB+oV:Ls1IMa01vLkKa)qOigk%d$X/XS12n)UFmn.ZP^{.K74*:gt*hg?J+7#[0I=c-I=.hlkVY@y$.5Pn_mTt6%-9P$/}8ec^4_3m4vc?4ffGxO3.}*g=tyfB3@6YMOTR:,PHnJey1:CnhF)dwV[4OQ-t;1[l6t(pr3t.NTD.gmZu}e+XFAKmYu5##p6N^q)cX^(o58-{vY)#kcuiN+qGS=Ck9H@mIO-4,evTkW#4{kH;Xg_9oXdWcpI6*MzviLN^*FRIk@2dwV.b(g$ywy=b_cU3VPE@IX9pS)Y*z7-P?#u+e-k[^p+=%MTMFAw(ymjMCxZ.nC4iS)Y5fCWMqqrFcC4*KgC[FE5XbjLgl:Rjbu/xg3o}7Z);{vDo3m*4jc@GiT2H=svc2-Q7KL.;7v$:Ve+x;r0/Faq@W^UI[#O]Fwt3V{nvZ8jX(RPsp-dD)xM6:2+2[otc;lg,enkhwJtF:4LJs(:f]1v_v7.7ZDJCeW/EBH#hh5pZ]3Y(8AYRcDrpD:FrfPX(Qu)dc9#.#;}u-dcD4{u[0;1*z!6pK0iA/d,+-8y{dn+38U07O}-LP(uccDf@j0Y65(CCKtQN30HBD/hGAHyY1[^F]g%5-NhT9xV]BiIufAIS*1UtI;tFvzp-[m(/K:Ss]0=YpTyA%[z(RIb+m2yMnIo@i^[p$y/!jfjl{e;;I6O2o#5uon:MJSbnM^t4j_+xThN*?V.lnekqNe-PLfv4DQ;oO(ix(=cKD?TJHatA_,H0;ho6SzA/9Qy0P@1^n]QqZ?^QNxU=6c37B{w*=FPTi#YE;a1bGiGv9u}GW8ue={K0JN.1.gkpFE3{aSxpOAmX+*%@!E:4l]qf^9HNvujzbcOxT+$+hK8EWW/H/yeIFs%qxa}#zQ11/O!j?;G*,ZO)(/ztliA$dyl}.opZw(XzWCyHr[.$}GH1]8y;Q[_y/VT4os{d;R1y$@WHR}Ui!TaFcgMky$2n):s.W9MG2#2))BL2.5//_nZA{ZvvRtp%zyJO3hr=mt[Z]RK97H0KXf*DYE/RK$m3TZZNyM[OP@jnLy=dEVhB3Ccw{%i}U+DLSnaO4cFI}E^xcH:H+^Z6ntSk:/WH^%)Pi?.]j9HdN9{SVnFvj;h-{%nTlP3lThYE$l-rgPn074^7GK7$EhL8wGilQjKPYID@S$@:}K]xh?oSgjDx4zYGx2_4YnxCH,@}a$?qYxrW^ct$kmD-_]J_Nb,H-YQAolXa1tg5OgwF3ba0I.(M@8Wkp[xJZp5+Zm8QB@e?4kwezSS%*l)xXZc30YXFR9x4}W)Pn1[)pGUujl!LgM-V/pT+/xo:^JvQqgri5^a0mxxKw5q,Bc)?jRC=(L_cAqk6sWIF92wuIsW#9T?z+?10Ah]-g?]YPHJ!]#D+b6h-EMV}kzbwH+flD9UA[*{zswVRRVd,uPgU^]R-0rVa.#LEE.EA3uKo^^6:ve[T}n(bg?9Ar!vD5rP1Gt==uZ.7X/9x}@!y39l9{,S{WE]_Y:5vDoVB;dl*UFD*)Qa:8Z(9smF$k%(kOj};V%gtu=so{XW6x7)YWxj-PGs%ko(E+6VVKKW#$+}sN]p-[lYy0EZt/.s/4G{[Y;B81qsEmD;1y0u!pR.yW-/v6zIxr_Z9I6=?(^PHXDc!Cgo]{XZxt.#van8:b$DK$.Qaa.%=#z;Ono{N(DfB*Fn+kj_5RjbvVot=*Xd#t}IU}q8IvaDDvmP^rorIIAswk/07N4OvWxaib}qMdWV7.m;+qFW%#gfWgW?[nCk=z*byhu=eez4i6:vuDq]uKVGKAFiydtgo,s@wCFezy0:(8#i]#c3jtsMx)MUS1OgEp(=aO3WW!+;(D{8LWpIV;2$xUs.yRA*NZ:2JC57m-}Z^SpNdA^^)hxatJ$^WIBu*eYBrm.ZF#:WIF{?uNQ4MY+y$JuL5z^61!Y,g3dpid(Osm$kR(OS$wniQ?$qp+QDU*pUthoZoHaO?y=pt9CnhFRsZ:l,;g!8sn%3!bgs$fY8mydigdTE:b1qsl2tms-36U6M2w[;}gh/[?X;;FtdK4dg?WJ%-v{g}N%jI(pEJ.$KP]G}mIzlKKjn2:^pE]AFY-}*@G}2cp7Z.b7mY#n4;CMf{p]jtq@YZyTgkW-V)lCrmmoA,-b7o:TiKV5hzE6eDwk%78TA[nPrjsN_A](44pFjWi0C0p+xm;Q+YJoriV}j9D5DB3ii9_A*flM_tI5=C^[9YStLP#[kwQbWd3^=#rIdY[4ulDrl(1O@3,i?I4kwtwAz)ZUfT[J:BLckcS*oKtzK]}L(xvt}7Zn/2ZpP(EDZ,-)ItW,witE:BAq]M7V):;Cr,_tt0-rioZSnTcX4Fm$WZrzH-Vv$HB91ef-$tUaUYnm1e2DNs)ElJWl?4R#9(;?k3yXPm$UBS4A0LhX;B#bdqRTX0r3/jsCr[/;@UDwm.bTW_=5iy)1W)TwBzP]!Hsc1B(;pCHXF%AIi?6Vh)d0Lj0%a/=z]Op7dDwR{KRaI4%WmQ!Ubf87t]AZCXR24(61b.:5BuP}RilV5hs.Ww/RMIp{*3k$Kly8h}Diq*?EG!(-;gXT-?P{7lebx8/%a/;UI?z,U*z#G[M]kLO%I/Da6n9szUfJ5)ipHX%X,sDh5_L$DR%C$:Ap{7r*CLI#wP-YqF$n_$mCC,p8iYvgc3Y4$9M.2OJsb]rgvBOZ+YkZJ03MCT000PuD5ZDr-kqJD%=?TA,kp@TmK[X,y6z)_I+]i+K-}8_2!U/eoHI%)LYOhOzP:6tz!--?A.U2K8XEZZzZk?a-}ayir%s))T3Rv.V^2/]YisL.7hW).vs$eRp[k9,3xz[f*jV_Q)8_h6z1_Roi0@xz:c$V7c@;ttuuzg7%0mbtX+QddWi{d)R.wupNeD=MlMn+av;0QQvT{JJAuP+EBoYx%R1^U$71w;JIM1E=UaeL.a%84P;q0#U*e8;v?ViY[5sUzUp-;N^RFWvhgaaTE$?l%]/;h0=jv/7ik%)wTAM}29:fS?}HZU-7;C(Z6r$Y!=T3Y)*Pk)y%=p?oqbGh8s**uAo^^4-OjSbNxX_-D7F9S*EJkK^x):ZI%wtS!ZzK:0;T}E]3q9+-68f:o[$+*V600000NkvXXu0mjfga7}l07If8Jw1elH?eM63W-!O!BVD$HX0U9!^}+-6!V]HdnRudmBcpsa.,aI23.v}r8P0mjZ1(2S8=X=Tl/{5UA[Q2hSp^}LTmop4sN}WY}KEbm?csU.z6..H:?8Kl{FrTYh38p!Z;e@e0D-)T=n2Gi(R;q1E7mEOh=h$17+l8</PublicKey>
+  </Signature>
+</CheatTable>
